@@ -11,6 +11,16 @@ app.use(express.json());
 // Routes
 app.get('/', (req, res) => res.send('TIPPSY API is running!'));
 
+// Import routes
+const authRoutes = require('./src/routes/auth');
+const reviewRoutes = require('./src/routes/reviews');
+const searchRoutes = require('./src/routes/search');
+
+// Use routes
+app.use('/auth', authRoutes);
+app.use('/reviews', reviewRoutes);
+app.use('/search', searchRoutes);
+
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB Connected'))

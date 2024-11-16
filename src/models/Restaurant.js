@@ -9,10 +9,12 @@ const restaurantSchema = new mongoose.Schema({
             type: String, // GeoJSON requires this field to specify the type of geometry
             enum: ['Point'], // Only 'Point' is valid for this schema
             required: true,
+            default: 'Point',
         },
         coordinates: {
-            type: [Number], // Array of numbers: [longitude, latitude]
+            type: [Number], // Array of numbers: [longitude, latitude],
             required: true,
+            default: [0, 0], // Default location: Null Island
         },
     },
     ratingsId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Rating',  }],
