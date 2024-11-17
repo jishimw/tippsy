@@ -3,10 +3,15 @@ const Drink = require('../models/Drink');
 const Restaurant = require('../models/Restaurant');
 const router = express.Router();
 const mongoose = require('mongoose');
+errorHandler = require('../utils/errorhandler');
 
 // Search for drinks by name or category
 router.get('/drinks', async (req, res) => {
     const { query } = req.query;
+
+    if (!query) {
+        return res.status(400).json({ error: 'Query parameter is required' });
+    }
 
     try {
         const drinks = await Drink.find({
@@ -17,7 +22,7 @@ router.get('/drinks', async (req, res) => {
         });
         res.status(200).json(drinks);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to search drinks', message: error.message });
+        errorHandler(error, req, res, next);
     }
 });
 
@@ -25,11 +30,15 @@ router.get('/drinks', async (req, res) => {
 router.get('/restaurants', async (req, res) => {
     const { query } = req.query;
 
+    if (!query) {
+        return res.status(400).json({ error: 'Query parameter is required' });
+    }
+
     try {
         const restaurants = await Restaurant.find({ name: { $regex: query, $options: 'i' } });
         res.status(200).json(restaurants);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to search restaurants', message: error.message });
+        errorHandler(error, req, res, next);
     }
 });
 

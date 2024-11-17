@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const router = express.Router();
 const mongoose = require('mongoose');
+errorHandler = require('../utils/errorhandler');
 
 // Register a new user
 router.post('/register', async (req, res) => {
@@ -31,7 +32,7 @@ router.post('/register', async (req, res) => {
         await newUser.save();
         res.status(201).json({ message: 'User registered successfully!' });
     } catch (error) {
-        res.status(500).json({ error: 'Registration failed', message: error.message });
+        errorHandler(error, req, res, next);
     }
 });
 
@@ -51,7 +52,7 @@ router.post('/login', async (req, res) => {
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.status(200).json({ token, user: { id: user._id, username: user.username } });
     } catch (error) {
-        res.status(500).json({ error: 'Login failed', message: error.message });
+        errorHandler(error, req, res, next);
     }
 });
 
