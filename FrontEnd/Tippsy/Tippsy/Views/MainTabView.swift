@@ -24,6 +24,16 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Profile", systemImage: "person")
                 }
+            
+            LoginView() // Login tab
+                .tabItem {
+                    Label("Login", systemImage: "key")
+                }
+                        
+            RegistrationView() // Registration tab
+                .tabItem {
+                    Label("Register", systemImage: "person.badge.plus")
+                }
         }
     }
 }
