@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct RegistrationView: View {
+    @Binding var isLoggedIn: Bool
     @State private var username = ""
     @State private var email = ""
     @State private var password = ""
@@ -32,12 +33,12 @@ struct RegistrationView: View {
                 AuthService.register(username: username, email: email, password: password) { result in
                     DispatchQueue.main.async {
                         switch result {
-                        case .success(let message):
-                            alertMessage = message
+                        case .success(_):
+                            isLoggedIn = true // Update login status
                         case .failure(let error):
                             alertMessage = error.localizedDescription
+                            showAlert = true
                         }
-                        showAlert = true
                     }
                 }
             }) {

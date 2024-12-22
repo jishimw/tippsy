@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct LoginView: View {
+    @Binding var isLoggedIn: Bool
     @State private var email = ""
     @State private var password = ""
     @State private var showAlert = false
@@ -27,12 +28,12 @@ struct LoginView: View {
                 AuthService.login(email: email, password: password) { result in
                     DispatchQueue.main.async {
                         switch result {
-                        case .success(let token):
-                            alertMessage = "Login Successful! Token: \(token)"
+                        case .success(_):
+                            isLoggedIn = true // Update login status
                         case .failure(let error):
                             alertMessage = error.localizedDescription
+                            showAlert = true
                         }
-                        showAlert = true
                     }
                 }
             }) {

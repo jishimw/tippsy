@@ -8,7 +8,7 @@
 import Foundation
 
 struct AuthService {
-    static let baseURL = "http://localhost:3000/auth" // Replace with your backend URL
+    static let baseURL = "http://localhost:3000/auth" // User authentication backend URL
 
     static func register(username: String, email: String, password: String, completion: @escaping (Result<String, Error>) -> Void) {
         guard let url = URL(string: "\(baseURL)/register") else { return }
