@@ -14,9 +14,9 @@ struct TippsyApp: App {
     var body: some Scene {
         WindowGroup {
             if isLoggedIn {
-                MainTabView() // Show main views if logged in
+                MainTabView() // Access the main app after login
             } else {
-                LoginOrRegisterView(isLoggedIn: $isLoggedIn) // Show login/registration otherwise
+                LoginOrRegisterView(isLoggedIn: $isLoggedIn) // Pass binding to update login state
             }
         }
     }

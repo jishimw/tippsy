@@ -40,8 +40,12 @@ struct AuthService {
         }.resume()
     }
     
+    
     static func login(email: String, password: String, completion: @escaping (Result<String, Error>) -> Void) {
-        guard let url = URL(string: "\(baseURL)/login") else { return }
+        guard let url = URL(string: "\(baseURL)/login") else {
+            print("Invalid URL")
+            return
+        }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -56,15 +60,24 @@ struct AuthService {
         
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
+                print("Error: \(error.localizedDescription)")
                 completion(.failure(error))
                 return
             }
             
-            if let data = data, let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let token = json["token"] as? String {
-                completion(.success(token))
-            } else {
-                completion(.failure(NSError(domain: "", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])))
+            if let httpResponse = response as? HTTPURLResponse {
+                print("HTTP Status Code: \(httpResponse.statusCode)")
+            }
+            
+            if let data = data {
+                print("Response Data: \(String(data: data, encoding: .utf8) ?? "No data")")
+                
+                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let token = json["token"] as? String {
+                    completion(.success(token))
+                } else {
+                    completion(.failure(NSError(domain: "", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])))
+                }
             }
         }.resume()
     }

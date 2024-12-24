@@ -14,6 +14,7 @@ struct RegistrationView: View {
     @State private var password = ""
     @State private var showAlert = false
     @State private var alertMessage = ""
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(spacing: 20) {
@@ -34,7 +35,9 @@ struct RegistrationView: View {
                     DispatchQueue.main.async {
                         switch result {
                         case .success(_):
-                            isLoggedIn = true // Update login status
+                            print("Registration Successful!") // Debug
+                            isLoggedIn = true // Grant access to MainTabView
+                            dismiss()   // Dismiss the registration view
                         case .failure(let error):
                             alertMessage = error.localizedDescription
                             showAlert = true
