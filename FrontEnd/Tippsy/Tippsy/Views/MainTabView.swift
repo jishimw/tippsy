@@ -24,6 +24,10 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Profile", systemImage: "person")
                 }
+            CreateReviewView()
+                .tabItem{
+                    Label("Write Review", systemImage: "pencil")
+                }
         }
     }
 }

@@ -15,6 +15,8 @@ struct LoginView: View {
     @State private var alertMessage = ""
     @Environment(\.dismiss) private var dismiss
     
+    static var loggedInUserId: String? // Store user ID globally after login
+    
     var body: some View {
         VStack(spacing: 20) {
             TextField("Email", text: $email)

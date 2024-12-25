@@ -30,7 +30,7 @@ router.post('/register', async (req, res) => {
 
         //save new user in users collection of tippsy database
         await newUser.save();
-        res.status(201).json({ message: 'User registered successfully!' });
+        res.status(201).json({ message: 'User registered successfully!', user: { id: newUser._id, username: newUser.username } });
     } catch (error) {
         errorHandler(error, req, res, next);
     }

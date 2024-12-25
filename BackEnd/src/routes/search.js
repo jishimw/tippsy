@@ -5,7 +5,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 errorHandler = require('../utils/errorhandler');
 
-// Search for drinks by name or category
+// Search (query) for drinks by name or category
 router.get('/drinks', async (req, res) => {
     const { query } = req.query;
 
@@ -22,11 +22,11 @@ router.get('/drinks', async (req, res) => {
         });
         res.status(200).json(drinks);
     } catch (error) {
-        errorHandler(error, req, res, next);
+        errorHandler(error, req, res);
     }
 });
 
-// Search for restaurants by name or location
+// Search (query) for restaurants by name
 router.get('/restaurants', async (req, res) => {
     const { query } = req.query;
 
@@ -38,8 +38,29 @@ router.get('/restaurants', async (req, res) => {
         const restaurants = await Restaurant.find({ name: { $regex: query, $options: 'i' } });
         res.status(200).json(restaurants);
     } catch (error) {
-        errorHandler(error, req, res, next);
+        errorHandler(error, req, res);
     }
 });
+
+// Fetch all drinks
+router.get('/allDrinks', async (req, res) => {
+    try {
+        const drinks = await Drink.find({}, 'name'); // Fetch only the 'name' field
+        res.status(200).json(drinks);
+    } catch (error) {
+        errorHandler(error, req, res);
+    }
+});
+
+// Fetch all restaurants
+router.get('/allRestaurants', async (req, res) => {
+    try {
+        const restaurants = await Restaurant.find({}, 'name'); // Fetch only the 'name' field
+        res.status(200).json(restaurants);
+    } catch (error) {
+        errorHandler(error, req, res);
+    }
+});
+
 
 module.exports = router;
