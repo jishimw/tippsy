@@ -1,6 +1,7 @@
 const express = require('express');
 const Review = require('../models/Review');
 const Drink = require('../models/Drink');
+const User = require('../models/User');
 const router = express.Router();
 const mongoose = require('mongoose');
 errorHandler = require('../utils/errorhandler');
@@ -27,6 +28,7 @@ router.post('/', async (req, res) => {
         });
 
         await newReview.save(); // Save the new review in the reviews collection
+        await User.updateOne({ _id: user_id }, { $push: { reviews: newReview._id } }); // Save the review in the user's reviews array
         //save the review in the reviews collection of tippsy database if the review is for a drink and not a restaurant
         if (drink_id) {
             await Drink.updateOne({ _id: drink_id }, { $push: { reviews: newReview._id } });

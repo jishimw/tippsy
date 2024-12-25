@@ -175,9 +175,20 @@ struct CreateReviewView: View {
             DispatchQueue.main.async {
                 self.alertMessage = "Review submitted successfully!"
                 self.showAlert = true
+                // Reset the form fields
+                self.resetForm()
             }
         }.resume()
     }
+
+    func resetForm() {
+        selectedRestaurant = ""
+        selectedDrink = ""
+        rating = 1
+        impairmentLevel = 1
+        comment = ""
+    }
+
 }
 
 struct CreateReviewView_Preview: PreviewProvider {

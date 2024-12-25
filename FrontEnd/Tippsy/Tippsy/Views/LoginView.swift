@@ -13,7 +13,6 @@ struct LoginView: View {
     @State private var password = ""
     @State private var showAlert = false
     @State private var alertMessage = ""
-    @Environment(\.dismiss) private var dismiss
     
     static var loggedInUserId: String? // Store user ID globally after login
     
@@ -32,12 +31,7 @@ struct LoginView: View {
                     DispatchQueue.main.async {
                         switch result {
                         case .success(let token):
-                            print("Token received: \(token)") // Debug
-                            print("isLoggedIn before update: \(isLoggedIn)") // Debug
                             isLoggedIn = true
-                            print("isLoggedIn after update: \(isLoggedIn)") // Debug
-                            print("isLoggedIn set to true") // Debug
-                            dismiss()   // Dismiss the login view
                         case .failure(let error):
                             print("Login error: \(error.localizedDescription)") // Debug
                             alertMessage = error.localizedDescription
