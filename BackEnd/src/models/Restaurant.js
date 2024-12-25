@@ -17,6 +17,7 @@ const restaurantSchema = new mongoose.Schema({
             default: [0, 0], // Default location: Null Island
         },
     },
+    drinks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Drink', }],      // Array of drink IDs that the restaurant serves (references to the 'drinks' collection) 
     ratingsId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Rating',  }],
 });
 
