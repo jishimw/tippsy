@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @Binding var isLoggedIn: Bool // Bind to login status from TippsyApp
+    
     var body: some View {
         TabView {
             HomeView()
@@ -20,7 +22,7 @@ struct MainTabView: View {
                     Label("Discover", systemImage: "magnifyingglass")
                 }
             
-            ProfileView() // Placeholder for a potential Profile page
+            ProfileView(isLoggedIn: $isLoggedIn)
                 .tabItem {
                     Label("Profile", systemImage: "person")
                 }

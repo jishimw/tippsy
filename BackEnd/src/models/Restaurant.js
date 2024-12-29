@@ -19,6 +19,7 @@ const restaurantSchema = new mongoose.Schema({
     },
     drinks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Drink', }],      // Array of drink IDs that the restaurant serves (references to the 'drinks' collection) 
     ratingsId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Rating',  }],
+    reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Review', }],
 });
 
 // Add geospatial index to the 'location' field

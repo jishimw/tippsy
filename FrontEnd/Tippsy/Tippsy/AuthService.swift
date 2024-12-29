@@ -8,13 +8,65 @@
 import Foundation
 
 struct AuthService {
-    static let baseURL = "http://localhost:3000/auth" // User authentication backend URL
+    static let baseURL = "http://localhost:3000" // User authentication backend URL
     static var loggedInUserId: String? // Global variable to store user ID
     static var username: String?     // Global variable to store username
     static var regUsername: String?
 
+    static func fetchUserProfile(userId: String, completion: @escaping (Result<(user: User, reviews: [Review]), Error>) -> Void) {
+        guard let url = URL(string: "\(baseURL)/users/\(userId)") else { return }
+
+        URLSession.shared.dataTask(with: url) { data, _, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+
+            if let data = data {
+                print("Profile response: \(String(data: data, encoding: .utf8) ?? "No data")") // Debugging
+                do {
+                    let response = try JSONDecoder().decode(ProfileResponse.self, from: data)
+                    completion(.success((response.user, response.reviews)))
+                } catch {
+                    print("Decoding error: \(error.localizedDescription)")
+                    completion(.failure(error))
+                }
+            } else {
+                completion(.failure(NSError(domain: "", code: 400, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
+            }
+        }.resume()
+    }
+
+
+    static func updateUserProfile(user: User, completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let url = URL(string: "\(baseURL)/users/\(user.id)") else { return }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: Any] = [
+            "username": user.username,
+            "profile_picture": user.profilePicture,
+            "preferences": [
+                "drink": user.preferences.drink,
+                "restaurant": user.preferences.restaurant,
+            ]
+        ]
+
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        URLSession.shared.dataTask(with: request) { _, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            completion(.success(()))
+        }.resume()
+    }
+
     static func register(username: String, email: String, password: String, completion: @escaping (Result<String, Error>) -> Void) {
-        guard let url = URL(string: "\(baseURL)/register") else { return }
+        guard let url = URL(string: "\(baseURL)/auth/register") else { return }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -50,7 +102,7 @@ struct AuthService {
     
     
     static func login(email: String, password: String, completion: @escaping (Result<String, Error>) -> Void) {
-        guard let url = URL(string: "\(baseURL)/login") else { return }
+        guard let url = URL(string: "\(baseURL)/auth/login") else { return }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"

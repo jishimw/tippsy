@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
 require('dotenv').config();
 const cors = require('cors');
 
@@ -18,11 +19,17 @@ app.get('/', (req, res) => res.send('TIPPSY API is running!'));
 const authRoutes = require('./src/routes/auth');
 const reviewRoutes = require('./src/routes/reviews');
 const searchRoutes = require('./src/routes/search');
+const userRoutes = require('./src/routes/users');
 
 // Use routes
 app.use('/auth', authRoutes);
 app.use('/reviews', reviewRoutes);
 app.use('/search', searchRoutes);
+app.use('/users', userRoutes);
+
+// Increase payload limit
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
