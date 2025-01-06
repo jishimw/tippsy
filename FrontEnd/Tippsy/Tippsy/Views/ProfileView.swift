@@ -52,15 +52,30 @@ struct ProfileView: View {
                 }
 
                 //add the user's review count
-                Text("Reviews: \(reviews.count)")
-                    .padding(.top, 10)
-                List(reviews) { review in
-                    VStack(alignment: .leading) {
-                        Text("Drink: \(review.drinkName ?? "N/A")")
-                        Text("Rating: \(review.rating)/5")
-                        Text("Comment: \(review.comment ?? "N/A")")
+                Text("Reviews: \(reviews.count)").padding(.top, 10)
+                if reviews.isEmpty {
+                    Text("No reviews yet")
+                        .italic()
+                        .foregroundColor(.gray)
+                        .padding(.top, 5)
+                } else {
+                    List(reviews.prefix(3), id: \.id) { review in
+                        VStack(alignment: .leading) {
+                            Text("Drink: \(review.drinkName ?? "N/A")")
+                                .font(.subheadline)
+                                .fontWeight(.bold)
+                            Text("Restaurant: \(review.restaurantName ?? "N/A")")
+                                .font(.subheadline)
+                            Text("Rating: \(review.rating)/5")
+                                .font(.subheadline)
+                            Text(review.comment)
+                                .font(.body)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 5)
                     }
-                }.padding(.top, 10)
+                    .frame(height: 200) // Limit the list height
+                }
 
                 //Preferences Area
                 ZStack {
@@ -86,7 +101,6 @@ struct ProfileView: View {
                         .padding()
                         .background(Color.blue)
                         .cornerRadius(8)
-                .padding()
                 .sheet(isPresented: $showEditProfile) {
                     EditProfileView(viewModel: viewModel)
                 }
@@ -100,7 +114,6 @@ struct ProfileView: View {
                 .padding()
                 .background(Color.red)
                 .cornerRadius(8)
-                .padding(.top)
             } else {
                 ProgressView("Loading...")
             }
