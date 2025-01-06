@@ -9,6 +9,7 @@ import SwiftUI
 
 struct MainTabView: View {
     @Binding var isLoggedIn: Bool // Bind to login status from TippsyApp
+    @ObservedObject var viewModel: UserViewModel // Add the viewModel parameter
     
     var body: some View {
         TabView {
@@ -22,20 +23,15 @@ struct MainTabView: View {
                     Label("Discover", systemImage: "magnifyingglass")
                 }
             
-            ProfileView(isLoggedIn: $isLoggedIn)
+            ProfileView(viewModel: viewModel, isLoggedIn: $isLoggedIn) // Pass viewModel here
                 .tabItem {
                     Label("Profile", systemImage: "person")
                 }
+
             CreateReviewView()
-                .tabItem{
+                .tabItem {
                     Label("Write Review", systemImage: "pencil")
                 }
         }
-    }
-}
-
-struct MainTabView_Previews: PreviewProvider {
-    static var previews: some View {
-        MainTabView()
     }
 }

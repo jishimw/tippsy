@@ -8,14 +8,15 @@
 import SwiftUI
 
 struct ProfileView: View {
-    @State private var user: User?
+    @ObservedObject var viewModel: UserViewModel
+    @Binding var isLoggedIn: Bool
     @State private var reviews: [Review] = []
+
     @State private var showEditProfile = false
-    @Binding var isLoggedIn: Bool // Bind to login status from TippsyApp
 
     var body: some View {
         VStack {
-            if let user = user {
+            if let user = viewModel.user {
                 AsyncImage(url: URL(string: user.profilePicture)) { image in
                     image.resizable()
                 } placeholder: {
@@ -51,27 +52,25 @@ struct ProfileView: View {
                 }
 
                 //add the user's review count
+                Text("Reviews: \(reviews.count)")
+                    .padding(.top, 10)
                 List(reviews) { review in
                     VStack(alignment: .leading) {
                         Text("Drink: \(review.drinkName ?? "N/A")")
                         Text("Rating: \(review.rating)/5")
-                        Text("Comment: \(review.comment)")
+                        Text("Comment: \(review.comment ?? "N/A")")
                     }
                 }.padding(.top, 10)
 
                 //Preferences Area
                 ZStack {
-                    Color.gray.opacity(0.2) // Light gray background
-                        .cornerRadius(10)
+                    Color.gray.opacity(0.2).cornerRadius(10)
                     VStack(alignment: .leading) {
-                        Text("Drink Preferences")
-                            .font(.headline)
+                        Text("Drink Preferences").font(.headline)
                         ForEach(user.preferences.drink, id: \.self) { drink in
                             Text(drink)
                         }
-
-                        Text("Restaurant Preferences")
-                            .font(.headline)
+                        Text("Restaurant Preferences").font(.headline)
                         ForEach(user.preferences.restaurant, id: \.self) { restaurant in
                             Text(restaurant)
                         }
@@ -80,57 +79,35 @@ struct ProfileView: View {
                 }
                 .padding()
 
-
-                Button(action: {
+                Button("Edit Profile") {
                     showEditProfile = true
-                }) {
-                    Text("Edit Profile")
-                        .font(.headline)
+                }.font(.headline)
                         .foregroundColor(.white)
                         .padding()
                         .background(Color.blue)
                         .cornerRadius(8)
-                }
                 .padding()
-                .sheet(isPresented: $showEditProfile, onDismiss: fetchProfile) {
-                    EditProfileView(user: $user)
+                .sheet(isPresented: $showEditProfile) {
+                    EditProfileView(viewModel: viewModel)
                 }
-                
-                Button(action: logout) {
-                    Text("Logout")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.red)
-                        .cornerRadius(8)
-                }
-                .padding(.top)
 
+                Button("Logout") {
+                    AuthService.loggedInUserId = nil
+                    isLoggedIn = false
+                }
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding()
+                .background(Color.red)
+                .cornerRadius(8)
+                .padding(.top)
             } else {
                 ProgressView("Loading...")
             }
         }
-        .onAppear(perform: fetchProfile)
-    }
-
-    func fetchProfile() {
-        guard let userId = AuthService.loggedInUserId else { return }
-        print("The logged in user's Id: \(userId)")
-        AuthService.fetchUserProfile(userId: userId) { result in
-            switch result {
-            case .success(let profile):
-                print("Profile: \(profile)")
-                self.user = profile.user
-                self.reviews = profile.reviews
-            case .failure(let error):
-                print("Error fetching profile: \(error.localizedDescription)")
-            }
+        .onAppear {
+            viewModel.fetchUserProfile()
+            reviews = viewModel.reviews // Assign reviews to the local state
         }
-    }
-    
-    func logout() {
-        AuthService.loggedInUserId = nil
-        AuthService.username = nil
-        isLoggedIn = false
     }
 }

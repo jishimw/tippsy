@@ -10,10 +10,10 @@ import SwiftUI
 import PhotosUI
 
 struct EditProfileView: View {
-    @Binding var user: User?
+    @ObservedObject var viewModel: UserViewModel
 
     @State private var username: String = ""
-    @State private var profilePicture: UIImage? // Store UIImage instead of URL
+    @State private var profilePicture: UIImage? 
     @State private var preferences: Preferences = Preferences(drink: [], restaurant: [])
 
     @State private var showAlert = false
@@ -25,70 +25,65 @@ struct EditProfileView: View {
 
     var body: some View {
         VStack {
-                    TextField("Username", text: $username)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding()
+            TextField("Username", text: $username)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding()
 
-                    // Profile Picture Selector
-                    if let profilePicture = profilePicture {
-                        Image(uiImage: profilePicture)
-                            .resizable()
-                            .frame(width: 100, height: 100)
-                            .clipShape(Circle())
-                            .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                    } else {
-                        Image(systemName: "person.crop.circle")
-                            .resizable()
-                            .frame(width: 100, height: 100)
-                            .foregroundColor(.gray)
-                    }
-                    Button("Change Profile Picture") {
-                        showPhotoPicker = true
-                    }
-                    .sheet(isPresented: $showPhotoPicker) {
-                        PHPickerViewControllerWrapper(selectedImage: $profilePicture)
-                    }
+            // Profile Picture Selector
+            if let profilePicture = profilePicture {
+                Image(uiImage: profilePicture)
+                    .resizable()
+                    .frame(width: 100, height: 100)
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(Color.white, lineWidth: 2))
+            } else {
+                Image(systemName: "person.crop.circle")
+                    .resizable()
+                    .frame(width: 100, height: 100)
+                    .foregroundColor(.gray)
+            }
+            Button("Change Profile Picture") {
+                showPhotoPicker = true
+            }.sheet(isPresented: $showPhotoPicker) {
+                PHPickerViewControllerWrapper(selectedImage: $profilePicture)
+            }
 
             VStack(alignment: .leading) {
-                Text("Drink Preferences")
-                    .font(.headline)
-
+                Text("Drink Preferences").font(.headline)
                 List {
-                    ForEach(preferences.drink, id: \.self) { drink in
-                        Text(drink)
-                            .swipeActions {
-                                Button(role: .destructive) {
-                                    preferences.drink.removeAll { $0 == drink }
-                                } label: {
-                                    Text("Delete")
-                                }
+                    ForEach(preferences.drink, id: \.self) { drink in Text(drink)
+                        .swipeActions {
+                            Button(role: .destructive) {
+                                preferences.drink.removeAll { $0 == drink }
+                            } label: {
+                                Text("Delete")
                             }
+                        }
+                        //<---! make sure the user can scroll through the list of restaurant preferences
+                        
                     }
                 }
                 Button("Add Drink") {
                     showAddDrink = true
                 }
                 .padding(.top)
-            }
-            .sheet(isPresented: $showAddDrink) {
+            }.sheet(isPresented: $showAddDrink) {
                 AddPreferenceView(preferenceType: "Drink", preferences: $preferences.drink)
             }
 
             VStack(alignment: .leading) {
-                Text("Restaurant Preferences")
-                    .font(.headline)
-
+                Text("Restaurant Preferences").font(.headline)
                 List {
-                    //make it so the user can scroll through the list of restaurants in the restaurant preference section
-                    ForEach(preferences.restaurant, id: \.self) { restaurant in
-                        Text(restaurant)
-                            .swipeActions {
-                                Button(role: .destructive) {
-                                    preferences.restaurant.removeAll { $0 == restaurant }
-                                } label: {
-                                    Text("Delete")
-                                }
+                    ForEach(preferences.restaurant, id: \.self) { restaurant in Text(restaurant)
+                        .swipeActions {
+                            Button(role: .destructive) {
+                                preferences.restaurant.removeAll { $0 == restaurant }
+                            } label: {
+                                Text("Delete")
                             }
+                        }
+                        //<---! make sure the user can scroll through the list of restaurant preferences
+                        
                     }
                 }
                 Button("Add Restaurant") {
@@ -101,26 +96,20 @@ struct EditProfileView: View {
                 AddPreferenceView(preferenceType: "Restaurant", preferences: $preferences.restaurant)
             }
 
-            Button(action: updateProfile) {
-                Text("Save Changes")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(Color.green)
-                    .cornerRadius(8)
-            }
-            .padding()
+            Button(action: saveChanges) {
+                Text("Save Changes").font(.headline).foregroundColor(.white).padding().background(Color.green).cornerRadius(8)
+            }.onTapGesture { // Update profile when tapped
+                saveChanges()
+            }.padding()
 
             Button("Cancel") {
                 dismiss()
-            }
-            .padding()
-
+            }.padding()
             Spacer()
-        }
-        .padding()
+
+        }.padding()
         .onAppear {
-            if let user = user {
+            if let user = viewModel.user {
                 username = user.username
                 preferences = user.preferences
             }
@@ -133,32 +122,21 @@ struct EditProfileView: View {
         }
     }
 
-    func updateProfile() {
-        guard let userId = AuthService.loggedInUserId else { return }
-        
-        let profilePictureBase64 = profilePicture.flatMap { convertImageToBase64(image: $0) } ?? ""
-        
+    func saveChanges() {
+        guard let user = viewModel.user else { return }
         let updatedUser = User(
-            id: userId,
+            id: user.id,
             username: username,
-            email: user?.email ?? "",
-            profilePicture: profilePictureBase64, // Pass the base64 string
+            email: user.email,
+            profilePicture: profilePicture?.jpegData(compressionQuality: 0.8)?.base64EncodedString() ?? "",
             preferences: preferences,
-            friends: user?.friends ?? []
+            friends: user.friends
         )
-        
-        AuthService.updateUserProfile(user: updatedUser) { result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success:
-                    user = updatedUser
-                    alertMessage = "Profile updated successfully!"
-                    showAlert = true
-                    dismiss()
-                case .failure(let error):
-                    alertMessage = "Error updating profile: \(error.localizedDescription)"
-                    showAlert = true
-                }
+        viewModel.updateUserProfile(updatedUser: updatedUser) { success in
+            if success {
+                dismiss()
+            } else {
+                print("Failed to update profile")
             }
         }
     }

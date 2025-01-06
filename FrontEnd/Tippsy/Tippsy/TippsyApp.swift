@@ -9,14 +9,15 @@ import SwiftUI
 
 @main
 struct TippsyApp: App {
-    @State private var isLoggedIn = false // Track login status
+    @StateObject var userViewModel = UserViewModel()
+    @State private var isLoggedIn = false
 
     var body: some Scene {
         WindowGroup {
             if isLoggedIn {
-                MainTabView(isLoggedIn: $isLoggedIn) // Access the main app after login
+                MainTabView(isLoggedIn: $isLoggedIn, viewModel: userViewModel)
             } else {
-                LoginOrRegisterView(isLoggedIn: $isLoggedIn) // Pass binding to update login state
+                LoginOrRegisterView(isLoggedIn: $isLoggedIn)
             }
         }
     }
