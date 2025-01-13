@@ -1,5 +1,5 @@
 # Tippsy
-** A new way to share, review and interact for both the seasoned connoisseurs or new drinkers!
+*A new way to share, review and interact for both the seasoned connoisseurs or new drinkers!*
 
 ## Features
 - Secure login and account management
