@@ -1,8 +1,8 @@
 import SwiftUI
 
-@available(iOS 18.0, *) // Ensures compatibility with iOS 18
-struct Post: Identifiable {
-    let id = UUID()
+@available(iOS 18.0, *)
+struct Post: Identifiable, Codable {
+    let id: UUID
     let username: String
     let drinkName: String
     let review: String
@@ -10,19 +10,44 @@ struct Post: Identifiable {
     let profileImage: String
 }
 
-@available(iOS 18.0, *) // Ensures compatibility with iOS 18
+@available(iOS 18.0, *)
+class ReviewService {
+    func fetchReviews(completion: @escaping ([Post]) -> Void) {
+        guard let url = URL(string: "https://your-backend-url.com/reviews") else {
+            print("Invalid URL")
+            return
+        }
+
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
+                print("Error fetching reviews:", error)
+                return
+            }
+
+            guard let data = data else {
+                print("No data received")
+                return
+            }
+
+            do {
+                let decodedReviews = try JSONDecoder().decode([Post].self, from: data)
+                DispatchQueue.main.async {
+                    completion(decodedReviews)
+                }
+            } catch {
+                print("Decoding error:", error)
+            }
+        }.resume()
+    }
+}
+
+@available(iOS 18.0, *)
 struct HomeView: View {
-    // Sample posts data
-    let posts: [Post] = [
-        Post(username: "John Doe", drinkName: "Mojito", review: "Refreshing and minty!", rating: 5, profileImage: "person"),
-        Post(username: "Jane Smith", drinkName: "Espresso Martini", review: "Perfect balance of coffee and vodka.", rating: 4, profileImage: "person.fill"),
-        Post(username: "Chris Evans", drinkName: "Old Fashioned", review: "Classic and strong!", rating: 5, profileImage: "person.circle")
-    ]
+    @State private var posts: [Post] = []
 
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background gradient
                 LinearGradient(
                     gradient: Gradient(colors: [Color.orange.opacity(0.3), Color.red.opacity(0.5)]),
                     startPoint: .top,
@@ -47,18 +72,22 @@ struct HomeView: View {
             }
             .navigationTitle("Home")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                ReviewService().fetchReviews { fetchedPosts in
+                    self.posts = fetchedPosts
+                }
+            }
         }
     }
 }
 
-@available(iOS 18.0, *) // Ensures compatibility with iOS 18
+@available(iOS 18.0, *)
 struct PostCard: View {
     let post: Post
     @State private var isLiked: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // User Info Row
             HStack {
                 Image(systemName: post.profileImage)
                     .resizable()
@@ -90,13 +119,11 @@ struct PostCard: View {
                 }
             }
 
-            // Drink Name
             Text(post.drinkName)
                 .font(.title3)
                 .fontWeight(.bold)
                 .foregroundColor(.orange)
 
-            // Review
             Text(post.review)
                 .font(.body)
                 .foregroundColor(.secondary)
@@ -115,15 +142,11 @@ struct PostCard: View {
         .padding(.horizontal)
     }
 
-    // Helper function to determine the rating color
     private func ratingColor(for rating: Int) -> Color {
         switch rating {
-        case 5:
-            return .green
-        case 3...4:
-            return .yellow
-        default:
-            return .red
+        case 5: return .green
+        case 3...4: return .yellow
+        default: return .red
         }
     }
 }
