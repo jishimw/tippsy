@@ -44,6 +44,16 @@ router.post('/', async (req, res) => {
     }
 });
 
+// Fetch all reviews sorted by latest
+router.get('/reviews', async (req, res) => {
+    try {
+        const reviews = await Review.find().sort({ createdAt: -1 }).populate('user_id', 'username');
+        res.status(200).json(reviews);
+    } catch (error) {
+        errorHandler(error, req, res);
+    }
+});
+
 // Fetch reviews for a drink
 router.get('/drink', async (req, res) => {
     const { drinkId } = req.query; // Optional query parameter
@@ -77,5 +87,7 @@ router.get('/restaurant', async (req, res) => {
         errorHandler(error, req, res);
     }
 });
+
+//Fetch 
 
 module.exports = router;

@@ -4,6 +4,7 @@ const Restaurant = require('../models/Restaurant');
 const router = express.Router();
 const mongoose = require('mongoose');
 errorHandler = require('../utils/errorhandler');
+const User = require('../models/User');
 
 // Search (query) for drinks by name or category
 router.get('/drinks', async (req, res) => {
@@ -61,6 +62,24 @@ router.get('/allRestaurants', async (req, res) => {
         errorHandler(error, req, res);
     }
 });
+
+// Search User by Username
+
+router.get('/users', async (req, res) => {
+    const { username } = req.query;
+
+    if (!username) {
+        return res.status(400).json({ error: 'Username query parameter is required' });
+    }
+
+    try {
+        const users = await User.find({ username: { $regex: username, $options: 'i' } });
+        res.status(200).json(users);
+    } catch (error) {
+        errorHandler(error, req, res);
+    }
+});
+
 
 
 module.exports = router;
