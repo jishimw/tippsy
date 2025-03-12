@@ -3,7 +3,7 @@
 //  Tippsy
 //
 //  Created by Nathan Bissett on 2024-12-04.
-//
+// Edited by Lucas Carter on 2025-03-12
 
 import SwiftUI
 
@@ -13,7 +13,7 @@ struct MainTabView: View {
     
     var body: some View {
         TabView {
-            HomeView()
+            HomeView(viewModel: viewModel , isLoggedIn: $isLoggedIn)
                 .tabItem {
                     Label("Home", systemImage: "house")
                 }
