@@ -6,26 +6,76 @@ struct DiscoverView: View {
         center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194), // Default: San Francisco
         span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
     )
-    
-    @State private var venues: [Venue] = [
-        Venue(name: "The Tipsy Tavern", type: "Bar", latitude: 37.7751, longitude: -122.4183),
-        Venue(name: "Brew Haven", type: "Restaurant", latitude: 37.7765, longitude: -122.4200),
-        Venue(name: "Cocktail Creations", type: "Lounge", latitude: 37.7742, longitude: -122.4179)
-    ]
-    
+
+    @State private var venues: [Venue] = []
+    @State private var searchText = ""
+
+    func searchVenues() {
+        let request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = "bars"
+        request.region = region
+
+        let search = MKLocalSearch(request: request)
+        search.start { response, error in
+            guard let response = response else {
+                print("Error:")
+                return
+            }
+
+            let newVenues = response.mapItems.map { item in
+                Venue(
+                    name: item.name ?? "Unknown",
+                    type: "Bar",
+                    latitude: item.placemark.coordinate.latitude,
+                    longitude: item.placemark.coordinate.longitude
+                )
+            }
+
+            DispatchQueue.main.async {
+                self.venues = newVenues
+            }
+        }
+    }
+
+
+    var filteredVenues: [Venue] {
+        if searchText.isEmpty {
+            return venues
+        }
+        return venues.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+    }
+
     var body: some View {
         NavigationStack {
             VStack {
-                // Map View
-                Map(coordinateRegion: $region, annotationItems: venues) { venue in
+// Map View
+                Map(coordinateRegion: $region, annotationItems: filteredVenues) { venue in
                     MapMarker(coordinate: venue.coordinate, tint: .blue)
                 }
                 .frame(height: 300)
                 .cornerRadius(10)
                 .padding()
-                
+                .onAppear {
+                searchVenues()
+            }
+            // Remove the .onChange modifier and add a gesture instead
+            .gesture(
+                DragGesture()
+                    .onEnded { _ in
+                        searchVenues()
+                    }
+            )
+                // Search Bar
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.gray)
+                    TextField("Search venues...", text: $searchText)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                }
+                .padding(.horizontal)
+
                 // List of Venues
-                List(venues) { venue in
+                List(filteredVenues) { venue in
                     HStack {
                         VStack(alignment: .leading) {
                             Text(venue.name)
@@ -37,7 +87,7 @@ struct DiscoverView: View {
                         Spacer()
                         Button(action: {
                             // Action for exploring venue (e.g., navigation or favorite)
-                            print("Explore \(venue.name)")
+                            print("Explore (venue.name)")
                         }) {
                             Image(systemName: "chevron.right")
                                 .foregroundColor(.blue)
@@ -45,10 +95,14 @@ struct DiscoverView: View {
                     }
                     .padding(.vertical, 5)
                 }
+}
                 .listStyle(InsetGroupedListStyle())
             }
             .navigationTitle("Discover")
             .padding(.top, 10)
+            .onAppear {
+                searchVenues()
+            }
         }
     }
 }
@@ -60,7 +114,7 @@ struct Venue: Identifiable {
     let type: String
     let latitude: Double
     let longitude: Double
-    
+
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
