@@ -46,7 +46,7 @@ router.get('/:userId', async (req, res) => {
                 restaurantName: review.restaurant_id?.name || null,
                 rating: review.rating,
                 comment: review.comment,
-                impairmentLevel: review.impairment_level,
+                impairment_level: review.impairment_level,
             })),
         });        
         console.log("\nFetched User -> ", user);
