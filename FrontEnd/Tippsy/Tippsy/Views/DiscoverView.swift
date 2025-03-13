@@ -2,8 +2,22 @@ import SwiftUI
 import MapKit
 
 struct DiscoverView: View {
+    // Add city struct and array
+    struct City {
+        let name: String
+        let latitude: Double
+        let longitude: Double
+    }
+
+    let cities = [
+        City(name: "San Francisco", latitude: 37.7749, longitude: -122.4194),
+        City(name: "London", latitude: 42.9849, longitude: -81.2453),
+        City(name: "Toronto", latitude: 43.6532, longitude: -79.3832)
+    ]
+
+    @State private var selectedCity = "San Francisco"
     @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 42.9848, longitude: -81.2453), // Default: San Francisco
+        center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
         span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
     )
 
@@ -18,7 +32,7 @@ struct DiscoverView: View {
         let search = MKLocalSearch(request: request)
         search.start { response, error in
             guard let response = response else {
-                print("Error:")
+                print("Error: (error?.localizedDescription ?? "Unknown error")")
                 return
             }
 
@@ -36,8 +50,7 @@ struct DiscoverView: View {
             }
         }
     }
-
-
+    
     var filteredVenues: [Venue] {
         if searchText.isEmpty {
             return venues
@@ -45,26 +58,48 @@ struct DiscoverView: View {
         return venues.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
     }
 
+    // Add function to update region based on selected city
+    private func updateRegion(for cityName: String) {
+        if let city = cities.first(where: { $0.name == cityName }) {
+            region = MKCoordinateRegion(
+                center: CLLocationCoordinate2D(
+                    latitude: city.latitude,
+                    longitude: city.longitude
+                ),
+                span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+            )
+            searchVenues()
+        }
+    }
+
     var body: some View {
         NavigationStack {
             VStack {
-// Map View
+                // City Picker
+                Picker("Select City", selection: $selectedCity) {
+                    ForEach(cities.map { $0.name }, id: .self) { city in
+                        Text(city).tag(city)
+                    }
+                }
+                .pickerStyle(MenuPickerStyle())
+                .padding()
+                .onChange(of: selectedCity) { newCity in
+                    updateRegion(for: newCity)
+                }
+
+                // Map View
                 Map(coordinateRegion: $region, annotationItems: filteredVenues) { venue in
                     MapMarker(coordinate: venue.coordinate, tint: .blue)
                 }
                 .frame(height: 300)
                 .cornerRadius(10)
                 .padding()
-                .onAppear {
-                searchVenues()
-            }
-            // Remove the .onChange modifier and add a gesture instead
-            .gesture(
-                DragGesture()
-                    .onEnded { _ in
-                        searchVenues()
-                    }
-            )
+                .gesture(
+                    DragGesture()
+                        .onEnded { _ in
+                            searchVenues()
+                        }
+                )
                 // Search Bar
                 HStack {
                     Image(systemName: "magnifyingglass")
@@ -76,26 +111,23 @@ struct DiscoverView: View {
 
                 // List of Venues
                 List(filteredVenues) { venue in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(venue.name)
-                                .font(.headline)
-                            Text(venue.type)
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
+                    NavigationLink(destination: RestaurantView(
+                        viewModel: RestaurantViewModel(),
+                        restaurantName: venue.name
+                    )) {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(venue.name)
+                                    .font(.headline)
+                                Text(venue.type)
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                            Spacer()
                         }
-                        Spacer()
-                        Button(action: {
-                            // Action for exploring venue (e.g., navigation or favorite)
-                            print("Explore (venue.name)")
-                        }) {
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.blue)
-                        }
+                        .padding(.vertical, 5)
                     }
-                    .padding(.vertical, 5)
                 }
-}
                 .listStyle(InsetGroupedListStyle())
             }
             .navigationTitle("Discover")
@@ -105,6 +137,7 @@ struct DiscoverView: View {
             }
         }
     }
+}
 
 // Venue Data Model
 struct Venue: Identifiable {
