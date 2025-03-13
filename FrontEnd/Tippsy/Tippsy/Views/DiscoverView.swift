@@ -3,7 +3,7 @@ import MapKit
 
 struct DiscoverView: View {
     @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194), // Default: San Francisco
+        center: CLLocationCoordinate2D(latitude: 42.9848, longitude: -81.2453), // Default: San Francisco
         span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
     )
 
@@ -105,7 +105,6 @@ struct DiscoverView: View {
             }
         }
     }
-}
 
 // Venue Data Model
 struct Venue: Identifiable {
