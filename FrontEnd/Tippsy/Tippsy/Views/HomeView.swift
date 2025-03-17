@@ -1,20 +1,9 @@
 import SwiftUI
 
-@available(iOS 18.0, *) // Ensures compatibility with iOS 18
-struct Post: Identifiable {
-    let id = UUID()
-    let username: String
-    let drinkName: String
-    let review: String
-    let rating: Int
-    let profileImage: String
-}
-//Lucas Carter
+@available(iOS 18.0, *)
 struct HomeView: View {
     @ObservedObject var viewModel: UserViewModel
     @Binding var isLoggedIn: Bool
-    @State private var reviews: [Review] = []
-
     @State private var showEditProfile = false
 
     var body: some View {
@@ -70,18 +59,42 @@ struct HomeView: View {
                                 }
                                 .padding(.horizontal)
 
-                                Text("Reviews: \(reviews.count)")
+                                Text("Reviews: \(viewModel.reviews.count)") // Use viewModel.reviews directly
                                     .padding(.horizontal)
                                     .foregroundColor(.white)
 
-                                if reviews.isEmpty {
+                                if viewModel.reviews.isEmpty {
                                     Text("No reviews yet")
                                         .italic()
                                         .foregroundColor(.gray)
                                         .padding(.horizontal)
                                 } else {
-                                    ForEach(reviews.prefix(5), id: \.id) { review in
+                                    ForEach(viewModel.reviews.prefix(5), id: \.id) { review in
                                         VStack(alignment: .leading, spacing: 10) {
+                                            // Display the photo if it exists
+                                            if let photoUrl = review.photoUrl, let url = URL(string: photoUrl) {
+                                                AsyncImage(url: url) { phase in
+                                                    switch phase {
+                                                    case .empty:
+                                                        ProgressView() // Show a loading indicator while the image is loading
+                                                    case .success(let image):
+                                                        image
+                                                            .resizable()
+                                                            .scaledToFit()
+                                                            .frame(height: 150)
+                                                            .cornerRadius(10)
+                                                    case .failure:
+                                                        Image(systemName: "photo") // Show a placeholder if the image fails to load
+                                                            .resizable()
+                                                            .scaledToFit()
+                                                            .frame(height: 150)
+                                                            .cornerRadius(10)
+                                                    @unknown default:
+                                                        EmptyView()
+                                                    }
+                                                }
+                                            }
+
                                             Text("Drink: \(review.drinkName ?? "N/A")")
                                                 .font(.subheadline)
                                                 .fontWeight(.bold)
@@ -103,7 +116,6 @@ struct HomeView: View {
                                         .padding(.horizontal)
                                     }
                                 }
-
                             }
                         } else {
                             ProgressView("Loading...")
@@ -116,8 +128,7 @@ struct HomeView: View {
             .navigationTitle("Home")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
-                viewModel.fetchUserProfile()
-                reviews = viewModel.reviews // Assign reviews to the local state
+                viewModel.fetchUserProfile() // Fetch the profile when the view appears
             }
         }
     }

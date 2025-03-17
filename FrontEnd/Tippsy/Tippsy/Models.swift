@@ -33,15 +33,17 @@ struct Review: Codable, Identifiable {
     let rating: Int
     let comment: String
     let impairmentLevel: Int
+    let photoUrl: String?
     
     enum CodingKeys: String, CodingKey {
-            case id
-            case drinkName
-            case restaurantName
-            case rating
-            case comment
-            case impairmentLevel = "impairment_level" // Map JSON field to Swift property
-        }
+        case id
+        case drinkName
+        case restaurantName
+        case rating
+        case comment
+        case impairmentLevel = "impairment_level" // Map JSON field to Swift property
+        case photoUrl
+    }
 }
 
 struct Preferences: Codable {
