@@ -99,4 +99,38 @@ router.put('/:userId', async (req, res) => {
     }
 });
 
+// Follow a user
+router.post('/:userId/follow', async (req, res) => {
+    const { userId } = req.params;
+    const { followUserId } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(followUserId)) {
+        return res.status(400).json({ message: 'Invalid user ID' });
+    }
+
+    try {
+        const user = await User.findById(userId);
+        const followUser = await User.findById(followUserId);
+
+        if (!user || !followUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (user.following.includes(followUserId)) {
+            return res.status(400).json({ message: 'Already following this user' });
+        }
+
+        user.following.push(followUserId);
+        followUser.followers.push(userId);
+
+        await user.save();
+        await followUser.save();
+
+        res.status(200).json({ message: 'Successfully followed the user' });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ message: 'Error following user', error: error.message });
+    }
+});
+
 module.exports = router;

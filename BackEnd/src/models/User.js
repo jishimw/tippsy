@@ -8,7 +8,8 @@ const userSchema = new mongoose.Schema({
     //The profile picture of the user (image file)
     profile_picture: { type: String, required: false },
     location: { type: String },
-    friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     preferences: {
         drink: { type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Drink' }], default: [] },
         restaurant: { type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant' }], default: [] },
