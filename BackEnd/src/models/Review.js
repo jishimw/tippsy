@@ -9,16 +9,14 @@ const reviewSchema = new mongoose.Schema({
     comment: { type: String },
     timestamp: { type: Date, default: Date.now },
     impairment_level: { type: Number, min: 1, max: 5 },
+    photoUrl: { type: String, required: false }, // Add this line for the photo URL
 }, {
-    // Custom validation logic
     validate: {
         validator: function (doc) {
-            // Ensure either drink_id or restaurant_id exists, but not both
             return doc.drink_id || doc.restaurant_id;
         },
         message: 'Either drink_id or restaurant_id must be provided, but not both as empty.',
     },
 });
 
-// Export the model
 module.exports = mongoose.model('Review', reviewSchema);
