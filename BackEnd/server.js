@@ -5,12 +5,15 @@ const bodyParser = require('body-parser');
 require('dotenv').config();
 const cors = require('cors');
 const errorHandler = require('./src/utils/errorhandler'); // Import error handler
-
+const path = require('path');
 const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
 app.use(cors());
+
+// Serve static files from the 'uploads' directory
+app.use('/uploads', express.static(path.join(__dirname, 'src', 'uploads'))); 
 
 // Routes
 app.get('/', (req, res) => res.send('TIPPSY API is running!'));
