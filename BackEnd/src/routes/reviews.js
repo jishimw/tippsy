@@ -4,14 +4,29 @@ const Drink = require('../models/Drink');
 const User = require('../models/User');
 const router = express.Router();
 const mongoose = require('mongoose');
+const multer = require('multer');
+const path = require('path');
 errorHandler = require('../utils/errorhandler');
 
-// Create a new review
-router.post('/', async (req, res) => {
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadPath = path.join(__dirname, '../uploads'); // Use absolute path
+        cb(null, uploadPath);
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + path.extname(file.originalname)); // Rename file to avoid conflicts
+    },
+});
+
+const upload = multer({ storage });
+
+// Create a new review with photo upload
+router.post('/', upload.single('photo'), async (req, res) => {
     const { user_id, drink_id, restaurant_id, rating, comment, impairment_level } = req.body;
+    const photoUrl = req.file ? `/uploads/${req.file.filename}` : null; // Get the file path if a file was uploaded
 
     try {
-        //if the same review was made by the same user for the same drink or restaurant, return an error
         const existingReview = await Review.findOne({ user_id, drink_id, restaurant_id, comment });
         if (existingReview) {
             return res.status(400).json({ message: 'Review already exists' });
@@ -25,18 +40,20 @@ router.post('/', async (req, res) => {
             rating,
             comment,
             impairment_level,
+            photoUrl, // Save the photo URL in the review
         });
 
-        await newReview.save(); // Save the new review in the reviews collection
-        await User.updateOne({ _id: user_id }, { $push: { reviews: newReview._id } }); // Save the review in the user's reviews array
-        //save the review in the reviews collection of tippsy database if the review is for a drink and not a restaurant
+        await newReview.save();
+        await User.updateOne({ _id: user_id }, { $push: { reviews: newReview._id } });
+
         if (drink_id) {
             await Drink.updateOne({ _id: drink_id }, { $push: { reviews: newReview._id } });
         }
-        res.status(201).json({ message: 'Review added successfully!' });
+
+        res.status(201).json({ message: 'Review added successfully!', photoUrl });
     } catch (error) {
         if (error.name === 'ValidationError') {
-            res.status(400).json({ message: error.message }); // Send validation error to the client
+            res.status(400).json({ message: error.message });
         } else {
             console.error(error);
             res.status(500).json({ message: 'Internal server error' });
@@ -48,7 +65,17 @@ router.post('/', async (req, res) => {
 router.get('/reviews', async (req, res) => {
     try {
         const reviews = await Review.find().sort({ createdAt: -1 }).populate('user_id', 'username');
-        res.status(200).json(reviews);
+        const response = reviews.map(review => ({
+            id: review._id,
+            drinkName: review.drink_id?.name, // Assuming drink_id is populated
+            restaurantName: review.restaurant_id?.name, // Assuming restaurant_id is populated
+            rating: review.rating,
+            comment: review.comment,
+            impairmentLevel: review.impairment_level,
+            photoUrl: review.photoUrl // Ensure this is included
+        }));
+        console.log(response);
+        res.status(200).json(response);
     } catch (error) {
         errorHandler(error, req, res);
     }

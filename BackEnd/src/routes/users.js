@@ -5,7 +5,7 @@ const Drink = require('../models/Drink');
 const Restaurant = require('../models/Restaurant');
 const router = express.Router();
 const mongoose = require('mongoose');
-
+const baseUrl = "http://localhost:3000"; 
 
 // Fetch user profile
 router.get('/:userId', async (req, res) => {
@@ -47,6 +47,7 @@ router.get('/:userId', async (req, res) => {
                 rating: review.rating,
                 comment: review.comment,
                 impairment_level: review.impairment_level,
+                photoUrl: review.photoUrl ? `${baseUrl}${review.photoUrl}` : null,
             })),
         });        
         console.log("\nFetched User -> ", user);
