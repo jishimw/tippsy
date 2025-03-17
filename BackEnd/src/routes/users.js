@@ -133,4 +133,63 @@ router.post('/:userId/follow', async (req, res) => {
     }
 });
 
+
+// Unfollow a user
+router.post('/:userId/unfollow', async (req, res) => {
+    const { userId } = req.params;
+    const { unfollowUserId } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(unfollowUserId)) {
+        return res.status(400).json({ message: 'Invalid user ID' });
+    }
+
+    try {
+        const user = await User.findById(userId);
+        const unfollowUser = await User.findById(unfollowUserId);
+
+        if (!user || !unfollowUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (!user.following.includes(unfollowUserId)) {
+            return res.status(400).json({ message: 'Not following this user' });
+        }
+
+        user.following = user.following.filter(id => id.toString() !== unfollowUserId);
+        unfollowUser.followers = unfollowUser.followers.filter(id => id.toString() !== userId);
+
+        await user.save();
+        await unfollowUser.save();
+
+        res.status(200).json({ message: 'Successfully unfollowed the user' });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ message: 'Error unfollowing user', error: error.message });
+    }
+});
+
+// Show all followers of a user
+router.get('/:userId/followers', async (req, res) => {
+    const { userId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({ message: 'Invalid user ID' });
+    }
+
+    try {
+        const user = await User.findById(userId).populate('followers', 'username profile_picture');
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json(user.followers);
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ message: 'Error fetching followers', error: error.message });
+    }
+});
+
+
+
 module.exports = router;
