@@ -5,7 +5,7 @@
 //  Created by Joelle Ishimwe on 2024-12-25.
 //
 
-iimport Foundation
+import Foundation
 
 struct User: Codable, Hashable {
     let id: String
