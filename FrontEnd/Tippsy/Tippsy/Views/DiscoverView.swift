@@ -111,30 +111,7 @@ struct DiscoverView: View {
         .listStyle(InsetGroupedListStyle())
     }
     
-    // Search venues using MKLocalSearch
-    func searchVenues() {
-        let request = MKLocalSearch.Request()
-        request.naturalLanguageQuery = "bars"
-        request.region = region
-        
-        let search = MKLocalSearch(request: request)
-        search.start { response, error in
-            guard let response = response else { return }
-            
-            let newVenues = response.mapItems.map { item in
-                Venue(
-                    name: item.name ?? "Unknown",
-                    type: "Bar",
-                    latitude: item.placemark.coordinate.latitude,
-                    longitude: item.placemark.coordinate.longitude
-                )
-            }
-            
-            DispatchQueue.main.async {
-                self.venues = newVenues
-            }
-        }
-    }
+
     
     // Update region based on selected city and refresh venues
     private func updateRegion(for cityName: String) {
@@ -147,6 +124,42 @@ struct DiscoverView: View {
                 span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
             )
             searchVenues()
+        }
+    }
+
+        // Search venues using MKLocalSearch
+    func searchVenues() {
+        let request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = "bars"
+        request.region = region
+        
+        let search = MKLocalSearch(request: request)
+        search.start { response, error in
+            guard let response = response else { return }
+            
+            var newVenues = response.mapItems.map { item in
+                Venue(
+                    name: item.name ?? "Unknown",
+                    type: "Bar",
+                    latitude: item.placemark.coordinate.latitude,
+                    longitude: item.placemark.coordinate.longitude
+                )
+            }
+
+        // this Check if London is the selected city and append BarX.
+        if self.selectedCity == "London" {
+            let barX = Venue(
+                name: "BarX",
+                type: "Bar",
+                latitude: 42.9849,   
+                longitude: -81.2453
+            )
+            newVenues.append(barX)
+        }
+            
+            DispatchQueue.main.async {
+                self.venues = newVenues
+            }
         }
     }
 }
