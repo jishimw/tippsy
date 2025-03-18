@@ -14,6 +14,7 @@ router.get('/topUsers', async (req, res) => {
             .sort({ followers: -1 })
             .limit(5);
 
+        console.log(users);
         res.status(200).json(users);
     } catch (error) {
         console.error(error.message);

@@ -77,6 +77,7 @@ router.get('/mostReviewedDrinks', async (req, res) => {
             { $project: { _id: 0, drink: { name: 1, totalReviews: 1 } } },
         ]);
 
+        console.log(drinks);
         res.status(200).json(drinks);
     } catch (error) {
         errorHandler(error, req, res);
