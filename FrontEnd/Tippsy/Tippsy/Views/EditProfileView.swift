@@ -13,7 +13,7 @@ struct EditProfileView: View {
     @ObservedObject var viewModel: UserViewModel
 
     @State private var username: String = ""
-    @State private var profilePicture: UIImage? 
+    @State private var profilePicture: UIImage?
     @State private var preferences: Preferences = Preferences(drink: [], restaurant: [])
 
     @State private var showAlert = false
@@ -48,6 +48,15 @@ struct EditProfileView: View {
                 PHPickerViewControllerWrapper(selectedImage: $profilePicture)
             }
 
+            // Display followers and following (read-only)
+            VStack(alignment: .leading) {
+                Text("Followers: \(viewModel.user?.followers.count ?? 0)")
+                    .font(.headline)
+                Text("Following: \(viewModel.user?.following.count ?? 0)")
+                    .font(.headline)
+            }
+            .padding()
+
             VStack(alignment: .leading) {
                 Text("Drink Preferences").font(.headline)
                 List {
@@ -59,8 +68,6 @@ struct EditProfileView: View {
                                 Text("Delete")
                             }
                         }
-                        //<---! make sure the user can scroll through the list of restaurant preferences
-                        
                     }
                 }
                 Button("Add Drink") {
@@ -82,14 +89,12 @@ struct EditProfileView: View {
                                 Text("Delete")
                             }
                         }
-                        //<---! make sure the user can scroll through the list of restaurant preferences
-                        
                     }
                 }
                 Button("Add Restaurant") {
                     showAddRestaurant = true
                 }
-                .padding(.top) 
+                .padding(.top)
                 .padding(.bottom)
             }
             .sheet(isPresented: $showAddRestaurant) {
@@ -130,7 +135,8 @@ struct EditProfileView: View {
             email: user.email,
             profilePicture: profilePicture?.jpegData(compressionQuality: 0.8)?.base64EncodedString() ?? "",
             preferences: preferences,
-            friends: user.friends
+            followers: user.followers, // Keep the existing followers
+            following: user.following  // Keep the existing following
         )
         viewModel.updateUserProfile(updatedUser: updatedUser) { success in
             if success {

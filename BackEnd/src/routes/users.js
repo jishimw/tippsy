@@ -13,7 +13,8 @@ router.get('/:userId', async (req, res) => {
         const user = await User.findById(req.params.userId)
             .populate('preferences.drink', 'name') // Ensure the Drink model is registered
             .populate('preferences.restaurant', 'name') // Ensure the Restaurant model is registered
-            .populate('friends', 'username profile_picture'); // Ensure 'friends' correctly references the User model
+            .populate('followers', 'username profile_picture') // Populate followers instead of friends
+            .populate('following', 'username profile_picture'); // Populate following if needed
         
         const reviews = await Review.find({ user_id: req.params.userId })
             .populate('drink_id', 'name') // Ensure the Drink model is registered
@@ -34,10 +35,15 @@ router.get('/:userId', async (req, res) => {
                     drink: user.preferences.drink.map(drink => drink.name), // Map to names
                     restaurant: user.preferences.restaurant.map(restaurant => restaurant.name), // Map to names
                 },
-                friends: user.friends.map(friend => ({
-                    id: friend._id,
-                    username: friend.username,
-                    profilePicture: friend.profile_picture,
+                followers: user.followers.map(follower => ({
+                    id: follower._id,
+                    username: follower.username,
+                    profilePicture: follower.profile_picture,
+                })),
+                following: user.following.map(followingUser => ({
+                    id: followingUser._id,
+                    username: followingUser.username,
+                    profilePicture: followingUser.profile_picture,
                 })),
             },
             reviews: reviews.map(review => ({

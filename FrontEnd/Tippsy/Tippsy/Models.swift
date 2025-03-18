@@ -5,7 +5,7 @@
 //  Created by Joelle Ishimwe on 2024-12-25.
 //
 
-import Foundation
+iimport Foundation
 
 struct User: Codable, Hashable {
     let id: String
@@ -13,7 +13,8 @@ struct User: Codable, Hashable {
     let email: String
     var profilePicture: String
     var preferences: Preferences
-    var friends: [User]
+    var followers: [User]
+    var following: [User]
 
     // Conform to Equatable
     static func == (lhs: User, rhs: User) -> Bool {

@@ -32,14 +32,14 @@ struct ProfileView: View {
                     .fontWeight(.bold)
                     .padding(.top, 10)
 
-                //add the user's friend following count
-                Text("Friends: \(user.friends.count)")
+                // Replace friends count with followers count
+                Text("Followers: \(user.followers.count)")
                     .padding(.top, 10)
 
-                //add the about 3 user friend's profile pictures
+                // Display the first 3 followers' profile pictures
                 HStack {
-                    ForEach(user.friends.prefix(3), id: \.self) { friend in
-                        AsyncImage(url: URL(string: friend.profilePicture)) { image in
+                    ForEach(user.followers.prefix(3), id: \.self) { follower in
+                        AsyncImage(url: URL(string: follower.profilePicture)) { image in
                             image.resizable()
                         } placeholder: {
                             Color.gray
@@ -51,7 +51,7 @@ struct ProfileView: View {
                     }
                 }
 
-                //add the user's review count
+                // Display the number of reviews
                 Text("Reviews: \(reviews.count)").padding(.top, 10)
                 if reviews.isEmpty {
                     Text("No reviews yet")
@@ -77,7 +77,7 @@ struct ProfileView: View {
                     .frame(height: 200) // Limit the list height
                 }
 
-                //Preferences Area
+                // Preferences Area
                 ZStack {
                     Color.gray.opacity(0.2).cornerRadius(10)
                     VStack(alignment: .leading) {
@@ -97,10 +97,10 @@ struct ProfileView: View {
                 Button("Edit Profile") {
                     showEditProfile = true
                 }.font(.headline)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.blue)
-                        .cornerRadius(8)
+                .foregroundColor(.white)
+                .padding()
+                .background(Color.blue)
+                .cornerRadius(8)
                 .sheet(isPresented: $showEditProfile) {
                     EditProfileView(viewModel: viewModel)
                 }

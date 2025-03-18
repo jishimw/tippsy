@@ -37,7 +37,7 @@ struct HomeView: View {
                                             .font(.title)
                                             .fontWeight(.bold)
                                             .foregroundColor(.white)
-                                        Text("Friends: \(user.friends.count)")
+                                        Text("Followers: \(user.followers.count)")
                                             .foregroundColor(.white)
                                     }
                                     Spacer()
@@ -45,8 +45,8 @@ struct HomeView: View {
                                 .padding(.horizontal)
 
                                 HStack {
-                                    ForEach(user.friends.prefix(3), id: \.self) { friend in
-                                        AsyncImage(url: URL(string: friend.profilePicture)) { image in
+                                    ForEach(user.followers.prefix(3), id: \.self) { follower in
+                                        AsyncImage(url: URL(string: follower.profilePicture)) { image in
                                             image.resizable()
                                         } placeholder: {
                                             Color.gray
@@ -59,7 +59,7 @@ struct HomeView: View {
                                 }
                                 .padding(.horizontal)
 
-                                Text("Reviews: \(viewModel.reviews.count)") // Use viewModel.reviews directly
+                                Text("Reviews: \(viewModel.reviews.count)")
                                     .padding(.horizontal)
                                     .foregroundColor(.white)
 
@@ -71,12 +71,11 @@ struct HomeView: View {
                                 } else {
                                     ForEach(viewModel.reviews.prefix(5), id: \.id) { review in
                                         VStack(alignment: .leading, spacing: 10) {
-                                            // Display the photo if it exists
                                             if let photoUrl = review.photoUrl, let url = URL(string: photoUrl) {
                                                 AsyncImage(url: url) { phase in
                                                     switch phase {
                                                     case .empty:
-                                                        ProgressView() // Show a loading indicator while the image is loading
+                                                        ProgressView()
                                                     case .success(let image):
                                                         image
                                                             .resizable()
@@ -84,7 +83,7 @@ struct HomeView: View {
                                                             .frame(height: 150)
                                                             .cornerRadius(10)
                                                     case .failure:
-                                                        Image(systemName: "photo") // Show a placeholder if the image fails to load
+                                                        Image(systemName: "photo")
                                                             .resizable()
                                                             .scaledToFit()
                                                             .frame(height: 150)
@@ -128,7 +127,7 @@ struct HomeView: View {
             .navigationTitle("Home")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
-                viewModel.fetchUserProfile() // Fetch the profile when the view appears
+                viewModel.fetchUserProfile()
             }
         }
     }

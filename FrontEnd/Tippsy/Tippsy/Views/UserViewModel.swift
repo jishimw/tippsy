@@ -24,7 +24,7 @@ class UserViewModel: ObservableObject {
                 case .success(let profile):
                     self.user = profile.user
                     self.reviews = profile.reviews
-                    print("Fetched reviews: \(self.reviews)") // Debug print to check if photoUrl is included
+                    print("Fetched reviews: \(self.reviews)")
                 case .failure(let error):
                     print("Error fetching profile: \(error.localizedDescription)")
                 }
