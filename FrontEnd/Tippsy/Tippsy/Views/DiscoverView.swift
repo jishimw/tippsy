@@ -14,21 +14,31 @@ struct DiscoverView: View {
     )
     
     @State private var venues: [Venue] = []
+    @State private var topUsers: [User] = []
+    @State private var topDrinks: [Drink] = []
     @State private var searchText = ""
+    
+    
     
     var body: some View {
         NavigationStack {
             VStack {
                 categorySelector
-                cityPicker
-                mapView
                 searchBar
-                venueList
+                if searchCategory == .map {
+                    cityPicker
+                    mapView
+                    venueList
+                } else if searchCategory == .users {
+                    userList
+                } else if searchCategory == .drinks {
+                    drinkList
+                }
             }
             .navigationTitle("Discover")
             .padding(.top, 10)
             .onAppear {
-                searchVenues()
+                fetchData()
             }
         }
     }
@@ -38,17 +48,27 @@ struct DiscoverView: View {
             ForEach([("Map", SearchCategory.map), ("Users", SearchCategory.users), ("Drinks", SearchCategory.drinks)], id: \..1) { label, category in
                 Button(action: {
                     searchCategory = category
-                    searchVenues()
+                    fetchData()
                 }) {
                     Text(label)
                         .padding()
                         .background(searchCategory == category ? Color.blue : Color.gray.opacity(0.2))
                         .foregroundColor(.white)
-                        .clipShape(Circle())
+                        .clipShape(Capsule())
                 }
             }
         }
         .padding()
+    }
+    
+    var searchBar: some View {
+        HStack {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.gray)
+            TextField("Search...", text: $searchText)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+        }
+        .padding(.horizontal)
     }
     
     var cityPicker: some View {
@@ -73,56 +93,58 @@ struct DiscoverView: View {
         .padding()
     }
     
-    var searchBar: some View {
-        HStack {
-            Image(systemName: "magnifyingglass")
-                .foregroundColor(.gray)
-            TextField("Search venues...", text: $searchText)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-        }
-        .padding(.horizontal)
-    }
-    
     var venueList: some View {
         List(venues) { venue in
-            NavigationLink(destination: Text("Details for \(venue.name)")) {
-                VStack(alignment: .leading) {
-                    Text(venue.name).font(.headline)
-                    Text(venue.type).font(.subheadline).foregroundColor(.gray)
-                }
-                .padding(.vertical, 5)
-            }
+            Text(venue.name)
         }
-        .listStyle(InsetGroupedListStyle())
     }
     
-<<<<<<< HEAD
 
-=======
+
     func searchVenues() {
         let query: String
         switch searchCategory {
         case .map: query = "bars"
         case .users: query = "users"
         case .drinks: query = "drinks"
+
+    var userList: some View {
+            List(topUsers, id: \..id) { user in
+                Text(user.username)
+            }
+
         }
         
-        let request = MKLocalSearch.Request()
-        request.naturalLanguageQuery = query
-        request.region = region
-        
-        let search = MKLocalSearch(request: request)
-        search.start { response, error in
-            guard let response = response else { return }
-            let newVenues = response.mapItems.map { item in
-                Venue(name: item.name ?? "Unknown", type: query, latitude: item.placemark.coordinate.latitude, longitude: item.placemark.coordinate.longitude)
-            }
-            DispatchQueue.main.async {
-                self.venues = newVenues
+    
+    var drinkList: some View {
+        List(topDrinks) { drink in
+            VStack(alignment: .leading) {
+                Text(drink.name).font(.headline)
+                Text(drink.category).font(.subheadline).foregroundColor(.gray)
             }
         }
     }
->>>>>>> 22cedca (Made search changes(toggle))
+
+    
+    func fetchData() {
+            switch searchCategory {
+            case .map:
+                searchVenues()
+            case .users:
+                SearchService.fetchTopUsers { users in
+                    DispatchQueue.main.async {
+                        self.topUsers = users
+                    }
+                }
+            case .drinks:
+                SearchService.fetchTopDrinks { drinks in
+                    DispatchQueue.main.async {
+                        self.topDrinks = drinks
+                    }
+                }
+            }
+        }
+    
     
     private func updateRegion(for cityName: String) {
         let cityCoordinates = [
@@ -190,3 +212,4 @@ struct DiscoverView_Previews: PreviewProvider {
         DiscoverView()
     }
 }
+
