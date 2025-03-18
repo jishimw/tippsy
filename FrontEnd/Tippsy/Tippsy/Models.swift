@@ -13,8 +13,8 @@ struct User: Codable, Hashable {
     let email: String
     var profilePicture: String
     var preferences: Preferences
-    var followers: [User]
-    var following: [User]
+    var followers: [Follower]
+    var following: [Follower]
 
     // Conform to Equatable
     static func == (lhs: User, rhs: User) -> Bool {
@@ -24,6 +24,22 @@ struct User: Codable, Hashable {
     // Conform to Hashable
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
+    }
+}
+
+struct Follower: Codable, Identifiable, Hashable {
+    let id: String
+    let username: String
+    let profilePicture: String
+    
+    // Conform to Hashable
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id) // Use `id` as the unique identifier for hashing
+    }
+
+    // Conform to Equatable
+    static func == (lhs: Follower, rhs: Follower) -> Bool {
+        lhs.id == rhs.id
     }
 }
 

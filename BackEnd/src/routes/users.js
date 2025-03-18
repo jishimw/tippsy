@@ -7,7 +7,6 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const baseUrl = "http://localhost:3000"; 
 
-
 // show users with the most followers (Top 5)
 router.get('/topUsers', async (req, res) => {
     try {
@@ -22,25 +21,23 @@ router.get('/topUsers', async (req, res) => {
     }
 });
 
-
 // Fetch user profile
 router.get('/:userId', async (req, res) => {
     try {
         const user = await User.findById(req.params.userId)
-            .populate('preferences.drink', 'name') // Ensure the Drink model is registered
-            .populate('preferences.restaurant', 'name') // Ensure the Restaurant model is registered
-            .populate('followers', 'username profile_picture') // Populate followers instead of friends
-            .populate('following', 'username profile_picture'); // Populate following if needed
+            .populate('preferences.drink', 'name')
+            .populate('preferences.restaurant', 'name')
+            .populate('followers', 'username profile_picture')
+            .populate('following', 'username profile_picture');
         
         const reviews = await Review.find({ user_id: req.params.userId })
-            .populate('drink_id', 'name') // Ensure the Drink model is registered
-            .populate('restaurant_id', 'name'); // Ensure the Restaurant model is registered
+            .populate('drink_id', 'name')
+            .populate('restaurant_id', 'name');
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Structure the response
         res.status(200).json({
             user: {
                 id: user._id,
@@ -48,8 +45,8 @@ router.get('/:userId', async (req, res) => {
                 email: user.email,
                 profilePicture: user.profile_picture || "",
                 preferences: {
-                    drink: user.preferences.drink.map(drink => drink.name), // Map to names
-                    restaurant: user.preferences.restaurant.map(restaurant => restaurant.name), // Map to names
+                    drink: user.preferences.drink.map(drink => drink.name),
+                    restaurant: user.preferences.restaurant.map(restaurant => restaurant.name),
                 },
                 followers: user.followers.map(follower => ({
                     id: follower._id,
@@ -71,15 +68,68 @@ router.get('/:userId', async (req, res) => {
                 impairment_level: review.impairment_level,
                 photoUrl: review.photoUrl ? `${baseUrl}${review.photoUrl}` : null,
             })),
-        });        
-        console.log("\nFetched User -> ", user);
+        });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching profile', error: error.message });
     }
 });
 
+// Fetch reviews from users the logged-in user is following
+router.get('/:userId/following/reviews', async (req, res) => {
+    const { userId } = req.params;
 
-// Update user profile (When saving profile_picture, decode the base64 string to a file and save it to the server)
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({ message: 'Invalid user ID' });
+    }
+
+    try {
+        const user = await User.findById(userId).populate('following');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const reviews = await Review.find({ user_id: { $in: user.following } })
+            .populate('drink_id', 'name')
+            .populate('restaurant_id', 'name');
+
+        res.status(200).json(reviews.map(review => ({
+            id: review._id,
+            drinkName: review.drink_id?.name || null,
+            restaurantName: review.restaurant_id?.name || null,
+            rating: review.rating,
+            comment: review.comment,
+            impairment_level: review.impairment_level,
+            photoUrl: review.photoUrl ? `${baseUrl}${review.photoUrl}` : null,
+            userId: review.user_id, // Include the user ID who posted the review
+        })));
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ message: 'Error fetching reviews from followed users', error: error.message });
+    }
+});
+
+// Fetch the list of users the logged-in user is following
+router.get('/:userId/following', async (req, res) => {
+    const { userId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({ message: 'Invalid user ID' });
+    }
+
+    try {
+        const user = await User.findById(userId).populate('following', 'username profile_picture');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json(user.following);
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ message: 'Error fetching following list', error: error.message });
+    }
+});
+
+// Update user profile
 router.put('/:userId', async (req, res) => {
     const { username, profile_picture, preferences } = req.body;
 
@@ -156,7 +206,6 @@ router.post('/:userId/follow', async (req, res) => {
     }
 });
 
-
 // Unfollow a user
 router.post('/:userId/unfollow', async (req, res) => {
     const { userId } = req.params;
@@ -191,8 +240,6 @@ router.post('/:userId/unfollow', async (req, res) => {
     }
 });
 
-
-
 // Show all followers of a user
 router.get('/:userId/followers', async (req, res) => {
     const { userId } = req.params;
@@ -214,7 +261,5 @@ router.get('/:userId/followers', async (req, res) => {
         res.status(500).json({ message: 'Error fetching followers', error: error.message });
     }
 });
-
-
 
 module.exports = router;

@@ -135,4 +135,85 @@ struct AuthService {
             }
         }.resume()
     }
+    static func followUser(userId: String, completion: @escaping (Result<Void, Error>) -> Void) {
+            guard let loggedInUserId = loggedInUserId else {
+                completion(.failure(NSError(domain: "", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not logged in"])))
+                return
+            }
+
+            guard let url = URL(string: "\(baseURL)/users/\(userId)/follow") else { return }
+
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+            let body: [String: Any] = [
+                "followUserId": loggedInUserId
+            ]
+
+            request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+            URLSession.shared.dataTask(with: request) { _, response, error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+                completion(.success(()))
+            }.resume()
+        }
+
+        static func unfollowUser(userId: String, completion: @escaping (Result<Void, Error>) -> Void) {
+            guard let loggedInUserId = loggedInUserId else {
+                completion(.failure(NSError(domain: "", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not logged in"])))
+                return
+            }
+
+            guard let url = URL(string: "\(baseURL)/users/\(userId)/unfollow") else { return }
+
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+            let body: [String: Any] = [
+                "unfollowUserId": loggedInUserId
+            ]
+
+            request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+            URLSession.shared.dataTask(with: request) { _, response, error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+                completion(.success(()))
+            }.resume()
+        }
+
+        static func checkIfFollowing(userId: String, completion: @escaping (Result<Bool, Error>) -> Void) {
+            guard let loggedInUserId = loggedInUserId else {
+                completion(.failure(NSError(domain: "", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not logged in"])))
+                return
+            }
+
+            guard let url = URL(string: "\(baseURL)/users/\(userId)/followers") else { return }
+
+            URLSession.shared.dataTask(with: url) { data, _, error in
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+
+                if let data = data {
+                    do {
+                        let followers = try JSONDecoder().decode([User].self, from: data)
+                        let isFollowing = followers.contains { $0.id == loggedInUserId }
+                        completion(.success(isFollowing))
+                    } catch {
+                        completion(.failure(error))
+                    }
+                } else {
+                    completion(.failure(NSError(domain: "", code: 400, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
+                }
+            }.resume()
+        }
 }
