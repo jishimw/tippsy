@@ -44,20 +44,20 @@ struct DiscoverView: View {
     }
     
     var categorySelector: some View {
-        HStack {
-            ForEach([("Map", SearchCategory.map), ("Users", SearchCategory.users), ("Drinks", SearchCategory.drinks)], id: \..1) { label, category in
-                Button(action: {
-                    searchCategory = category
-                    fetchData()
-                }) {
-                    Text(label)
-                        .padding()
-                        .background(searchCategory == category ? Color.blue : Color.gray.opacity(0.2))
-                        .foregroundColor(.white)
-                        .clipShape(Capsule())
+            HStack {
+                ForEach([("Map", SearchCategory.map), ("Users", SearchCategory.users), ("Drinks", SearchCategory.drinks)], id: \..1) { label, category in
+                    Button(action: {
+                        searchCategory = category
+                        fetchData()
+                    }) {
+                        Text(label)
+                            .padding()
+                            .background(searchCategory == category ? Color.blue : Color.gray.opacity(0.2))
+                            .foregroundColor(.white)
+                            .clipShape(Capsule())
+                    }
                 }
             }
-        }
         .padding()
     }
     
@@ -101,20 +101,15 @@ struct DiscoverView: View {
     
 
 
-    func searchVenues() {
-        let query: String
-        switch searchCategory {
-        case .map: query = "bars"
-        case .users: query = "users"
-        case .drinks: query = "drinks"
-
+    
+            
     var userList: some View {
-            List(topUsers, id: \..id) { user in
-                Text(user.username)
-            }
-
+        List(topUsers, id: \..id) { user in
+            Text(user.username)
         }
         
+    }
+    
     
     var drinkList: some View {
         List(topDrinks) { drink in
@@ -124,28 +119,28 @@ struct DiscoverView: View {
             }
         }
     }
-
     
+            
     func fetchData() {
-            switch searchCategory {
-            case .map:
-                searchVenues()
-            case .users:
-                SearchService.fetchTopUsers { users in
-                    DispatchQueue.main.async {
-                        self.topUsers = users
-                    }
+        switch searchCategory {
+        case .map:
+            searchVenues()
+        case .users:
+            SearchService.fetchTopUsers { users in
+                DispatchQueue.main.async {
+                    self.topUsers = users
                 }
-            case .drinks:
-                SearchService.fetchTopDrinks { drinks in
-                    DispatchQueue.main.async {
-                        self.topDrinks = drinks
-                    }
+            }
+        case .drinks:
+            SearchService.fetchTopDrinks { drinks in
+                DispatchQueue.main.async {
+                    self.topDrinks = drinks
                 }
             }
         }
-    
-    
+    }
+            
+            
     private func updateRegion(for cityName: String) {
         let cityCoordinates = [
             "San Francisco": CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
@@ -157,8 +152,8 @@ struct DiscoverView: View {
             searchVenues()
         }
     }
-
-        // Search venues using MKLocalSearch
+            
+    // Search venues using MKLocalSearch
     func searchVenues() {
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = "bars"
@@ -176,17 +171,17 @@ struct DiscoverView: View {
                     longitude: item.placemark.coordinate.longitude
                 )
             }
-
-        // this Check if London is the selected city and append BarX.
-        if self.selectedCity == "London" {
-            let barX = Venue(
-                name: "BarX",
-                type: "Bar",
-                latitude: 42.9849,   
-                longitude: -81.2453
-            )
-            newVenues.append(barX)
-        }
+            
+            // this Check if London is the selected city and append BarX.
+            if self.selectedCity == "London" {
+                let barX = Venue(
+                    name: "BarX",
+                    type: "Bar",
+                    latitude: 42.9849,
+                    longitude: -81.2453
+                )
+                newVenues.append(barX)
+            }
             
             DispatchQueue.main.async {
                 self.venues = newVenues
@@ -194,7 +189,7 @@ struct DiscoverView: View {
         }
     }
 }
-
+        
 struct Venue: Identifiable {
     let id = UUID()
     let name: String
@@ -206,7 +201,7 @@ struct Venue: Identifiable {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
 }
-
+        
 struct DiscoverView_Previews: PreviewProvider {
     static var previews: some View {
         DiscoverView()
