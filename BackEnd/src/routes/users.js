@@ -13,8 +13,7 @@ router.get('/topUsers', async (req, res) => {
     try {
         const users = await User.find()
             .sort({ followers: -1 })
-            .limit(5)
-            .select('username followers profile_picture');
+            .limit(5);
 
         res.status(200).json(users);
     } catch (error) {

@@ -73,6 +73,7 @@ router.get('/mostReviewedDrinks', async (req, res) => {
             { $sort: { totalReviews: -1 } },
             { $limit: 5 },
             { $lookup: { from: 'drinks', localField: '_id', foreignField: '_id', as: 'drink' } },
+            { $unwind: '$drink' },
             { $project: { _id: 0, drink: { name: 1, totalReviews: 1 } } },
         ]);
 
