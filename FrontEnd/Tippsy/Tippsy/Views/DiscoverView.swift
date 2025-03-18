@@ -2,19 +2,11 @@ import SwiftUI
 import MapKit
 
 struct DiscoverView: View {
-    // City struct and array
-    struct City {
-        let name: String
-        let latitude: Double
-        let longitude: Double
+    enum SearchCategory {
+        case map, users, drinks
     }
     
-    let cities = [
-        City(name: "San Francisco", latitude: 37.7749, longitude: -122.4194),
-        City(name: "London", latitude: 42.9849, longitude: -81.2453),
-        City(name: "Toronto", latitude: 43.6532, longitude: -79.3832)
-    ]
-    
+    @State private var searchCategory: SearchCategory = .map
     @State private var selectedCity = "San Francisco"
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
@@ -24,16 +16,10 @@ struct DiscoverView: View {
     @State private var venues: [Venue] = []
     @State private var searchText = ""
     
-    var filteredVenues: [Venue] {
-        if searchText.isEmpty {
-            return venues
-        }
-        return venues.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
-    }
-    
     var body: some View {
         NavigationStack {
             VStack {
+                categorySelector
                 cityPicker
                 mapView
                 searchBar
@@ -47,10 +33,27 @@ struct DiscoverView: View {
         }
     }
     
-    // City Picker subview
+    var categorySelector: some View {
+        HStack {
+            ForEach([("Map", SearchCategory.map), ("Users", SearchCategory.users), ("Drinks", SearchCategory.drinks)], id: \..1) { label, category in
+                Button(action: {
+                    searchCategory = category
+                    searchVenues()
+                }) {
+                    Text(label)
+                        .padding()
+                        .background(searchCategory == category ? Color.blue : Color.gray.opacity(0.2))
+                        .foregroundColor(.white)
+                        .clipShape(Circle())
+                }
+            }
+        }
+        .padding()
+    }
+    
     var cityPicker: some View {
         Picker("Select City", selection: $selectedCity) {
-            ForEach(cities.map { $0.name }, id: \.self) { city in
+            ForEach(["San Francisco", "London", "Toronto"], id: \..self) { city in
                 Text(city).tag(city)
             }
         }
@@ -61,23 +64,15 @@ struct DiscoverView: View {
         }
     }
     
-    // Map View subview
     var mapView: some View {
-        Map(coordinateRegion: $region, annotationItems: filteredVenues) { venue in
+        Map(coordinateRegion: $region, annotationItems: venues) { venue in
             MapMarker(coordinate: venue.coordinate, tint: .blue)
         }
         .frame(height: 300)
         .cornerRadius(10)
         .padding()
-        .gesture(
-            DragGesture()
-                .onEnded { _ in
-                    searchVenues()
-                }
-        )
     }
     
-    // Search Bar subview
     var searchBar: some View {
         HStack {
             Image(systemName: "magnifyingglass")
@@ -88,22 +83,12 @@ struct DiscoverView: View {
         .padding(.horizontal)
     }
     
-    // Venue List subview
     var venueList: some View {
-        List(filteredVenues) { venue in
-            NavigationLink(destination: RestaurantView(
-                viewModel: RestaurantViewModel(),
-                restaurantName: venue.name
-            )) {
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text(venue.name)
-                            .font(.headline)
-                        Text(venue.type)
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                    }
-                    Spacer()
+        List(venues) { venue in
+            NavigationLink(destination: Text("Details for \(venue.name)")) {
+                VStack(alignment: .leading) {
+                    Text(venue.name).font(.headline)
+                    Text(venue.type).font(.subheadline).foregroundColor(.gray)
                 }
                 .padding(.vertical, 5)
             }
@@ -111,18 +96,42 @@ struct DiscoverView: View {
         .listStyle(InsetGroupedListStyle())
     }
     
+<<<<<<< HEAD
 
+=======
+    func searchVenues() {
+        let query: String
+        switch searchCategory {
+        case .map: query = "bars"
+        case .users: query = "users"
+        case .drinks: query = "drinks"
+        }
+        
+        let request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = query
+        request.region = region
+        
+        let search = MKLocalSearch(request: request)
+        search.start { response, error in
+            guard let response = response else { return }
+            let newVenues = response.mapItems.map { item in
+                Venue(name: item.name ?? "Unknown", type: query, latitude: item.placemark.coordinate.latitude, longitude: item.placemark.coordinate.longitude)
+            }
+            DispatchQueue.main.async {
+                self.venues = newVenues
+            }
+        }
+    }
+>>>>>>> 22cedca (Made search changes(toggle))
     
-    // Update region based on selected city and refresh venues
     private func updateRegion(for cityName: String) {
-        if let city = cities.first(where: { $0.name == cityName }) {
-            region = MKCoordinateRegion(
-                center: CLLocationCoordinate2D(
-                    latitude: city.latitude,
-                    longitude: city.longitude
-                ),
-                span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-            )
+        let cityCoordinates = [
+            "San Francisco": CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
+            "London": CLLocationCoordinate2D(latitude: 42.9849, longitude: -81.2453),
+            "Toronto": CLLocationCoordinate2D(latitude: 43.6532, longitude: -79.3832)
+        ]
+        if let coord = cityCoordinates[cityName] {
+            region = MKCoordinateRegion(center: coord, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))
             searchVenues()
         }
     }
@@ -164,7 +173,6 @@ struct DiscoverView: View {
     }
 }
 
-// Venue Data Model
 struct Venue: Identifiable {
     let id = UUID()
     let name: String
