@@ -7,6 +7,23 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const baseUrl = "http://localhost:3000"; 
 
+
+// show users with the most followers (Top 5)
+router.get('/topUsers', async (req, res) => {
+    try {
+        const users = await User.find()
+            .sort({ followers: -1 })
+            .limit(5)
+            .select('username followers profile_picture');
+
+        res.status(200).json(users);
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ message: 'Error fetching top users', error: error.message });
+    }
+});
+
+
 // Fetch user profile
 router.get('/:userId', async (req, res) => {
     try {
@@ -174,6 +191,8 @@ router.post('/:userId/unfollow', async (req, res) => {
         res.status(500).json({ message: 'Error unfollowing user', error: error.message });
     }
 });
+
+
 
 // Show all followers of a user
 router.get('/:userId/followers', async (req, res) => {

@@ -4,6 +4,8 @@ const Restaurant = require('../models/Restaurant');
 const Review = require('../models/Review');
 const router = express.Router();
 
+
+
 router.get('/name/:restaurantName', async (req, res) => {
     console.log('Fetching restaurant:', req.params.restaurantName); // Log the restaurant name
     try {

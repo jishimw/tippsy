@@ -8,6 +8,8 @@ const multer = require('multer');
 const path = require('path');
 errorHandler = require('../utils/errorhandler');
 
+    
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -58,6 +60,25 @@ router.post('/', upload.single('photo'), async (req, res) => {
             console.error(error);
             res.status(500).json({ message: 'Internal server error' });
         }
+    }
+});
+
+
+// Get most reviewed drinks (Top 5)
+router.get('/mostReviewedDrinks', async (req, res) => {
+    try {
+        const drinks = await Review.aggregate([
+            { $match: { drink_id: { $ne: null } } },
+            { $group: { _id: '$drink_id', totalReviews: { $sum: 1 } } },
+            { $sort: { totalReviews: -1 } },
+            { $limit: 5 },
+            { $lookup: { from: 'drinks', localField: '_id', foreignField: '_id', as: 'drink' } },
+            { $project: { _id: 0, drink: { name: 1, totalReviews: 1 } } },
+        ]);
+
+        res.status(200).json(drinks);
+    } catch (error) {
+        errorHandler(error, req, res);
     }
 });
 
