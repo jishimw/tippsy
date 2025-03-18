@@ -69,7 +69,7 @@ struct HomeView: View {
                                         .foregroundColor(.gray)
                                         .padding(.horizontal)
                                 } else {
-                                    ForEach(viewModel.reviews.prefix(5), id: \.id) { review in
+                                    ForEach(viewModel.reviews, id: \.id) { review in
                                         VStack(alignment: .leading, spacing: 10) {
                                             if let photoUrl = review.photoUrl, let url = URL(string: photoUrl) {
                                                 AsyncImage(url: url) { phase in
