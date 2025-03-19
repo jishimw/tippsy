@@ -5,7 +5,7 @@
 //  Created by Nathan Bissett on 2024-12-04.
 //
 
-iimport SwiftUI
+import SwiftUI
 
 struct ProfileView: View {
     @ObservedObject var viewModel: UserViewModel
