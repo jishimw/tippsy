@@ -6,6 +6,7 @@ struct HomeView: View {
     @Binding var isLoggedIn: Bool
     @State private var showEditProfile = false
     @State private var followingUsersReviews: [Review] = [] // Stores reviews from followed users
+    @State private var followingUsers: [User] = [] // Stores the list of users you follow
 
     var body: some View {
         NavigationView {
@@ -24,7 +25,7 @@ struct HomeView: View {
                             // User's profile section
                             VStack(alignment: .leading, spacing: 15) {
                                 HStack {
-                                    AsyncImage(url: URL(string: user.profilePicture)) { image in
+                                    AsyncImage(url: URL(string: user.profilePicture ?? "")) { image in
                                         image.resizable()
                                     } placeholder: {
                                         Color.gray
@@ -49,8 +50,8 @@ struct HomeView: View {
                                 // Display the first 3 followers
                                 HStack {
                                     ForEach(user.followers.prefix(3), id: \.self) { follower in
-                                        NavigationLink(destination: OtherUserProfileView(viewModel: viewModel)) {
-                                            AsyncImage(url: URL(string: follower.profilePicture)) { image in
+                                        NavigationLink(destination: OtherUserProfileView(viewModel: UserViewModel(user: User(id: follower.id, username: follower.username, email: "", profilePicture: follower.profilePicture, preferences: Preferences(drink: [], restaurant: []), followers: [], following: [])))) {
+                                            AsyncImage(url: URL(string: follower.profilePicture ?? "")) { image in
                                                 image.resizable()
                                             } placeholder: {
                                                 Color.gray
@@ -78,6 +79,44 @@ struct HomeView: View {
                                     ForEach(viewModel.reviews, id: \.id) { review in
                                         ReviewCard(review: review)
                                     }
+                                }
+                            }
+
+                            // Profiles of followed users section
+                            Text("People You Follow")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .padding(.horizontal)
+
+                            if followingUsers.isEmpty {
+                                Text("You are not following anyone yet")
+                                    .italic()
+                                    .foregroundColor(.gray)
+                                    .padding(.horizontal)
+                            } else {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 15) {
+                                        ForEach(followingUsers, id: \.id) { user in
+                                            NavigationLink(destination: OtherUserProfileView(viewModel: UserViewModel(user:user, isFollowing: isFollowingUser(user)))) {
+                                                VStack {
+                                                    AsyncImage(url: URL(string: user.profilePicture ?? "")) { image in
+                                                        image.resizable()
+                                                    } placeholder: {
+                                                        Color.gray
+                                                    }
+                                                    .frame(width: 80, height: 80)
+                                                    .clipShape(Circle())
+                                                    .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                                                    .shadow(radius: 10)
+                                                    
+                                                    Text(user.username)
+                                                        .font(.subheadline)
+                                                        .foregroundColor(.white)
+                                                }
+                                            }
+                                        }
+                                    }
+                                    .padding(.horizontal)
                                 }
                             }
 
@@ -110,10 +149,15 @@ struct HomeView: View {
             .onAppear {
                 viewModel.fetchUserProfile()
                 fetchFollowingUsersReviews() // Fetch reviews from followed users
+                fetchFollowingUsers() // Fetch the list of users you follow
             }
         }
     }
 
+    private func isFollowingUser(_ user: User) -> Bool {
+        return followingUsers.contains { $0.id == user.id }
+    }
+    
     // Helper function to fetch reviews from followed users
     private func fetchFollowingUsersReviews() {
         guard let userId = AuthService.loggedInUserId else { return }
@@ -134,6 +178,46 @@ struct HomeView: View {
                     }
                 } catch {
                     print("Failed to decode reviews: \(error.localizedDescription)")
+                }
+            }
+        }.resume()
+    }
+
+    // Helper function to fetch the list of users you follow
+    private func fetchFollowingUsers() {
+        guard let userId = AuthService.loggedInUserId else { return }
+
+        let url = URL(string: "\(AuthService.baseURL)/users/\(userId)/following")!
+
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
+                print("Error fetching following users: \(error.localizedDescription)")
+                return
+            }
+
+            if let data = data {
+                do {
+                    // Decode into an array of Follower objects
+                    let followers = try JSONDecoder().decode([Follower].self, from: data)
+                    DispatchQueue.main.async {
+                        // Convert Follower objects to User objects for compatibility
+                        self.followingUsers = followers.map { follower in
+                            User(
+                                id: follower.id,
+                                username: follower.username,
+                                email: "", // Email is not provided in the response
+                                profilePicture: follower.profilePicture,
+                                preferences: Preferences(drink: [], restaurant: []),
+                                followers: [],
+                                following: []
+                            )
+                        }
+                        // Filter out the logged-in user from the list
+                        self.followingUsers = self.followingUsers.filter { $0.id != userId }
+                        print("Fetched following users: \(self.followingUsers)") // Debugging
+                    }
+                } catch {
+                    print("Failed to decode following users: \(error.localizedDescription)")
                 }
             }
         }.resume()
