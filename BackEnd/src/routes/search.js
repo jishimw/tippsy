@@ -64,17 +64,40 @@ router.get('/allRestaurants', async (req, res) => {
 });
 
 // Search User by Username
-
 router.get('/users', async (req, res) => {
     const { username } = req.query;
 
-    if (!username) {
-        return res.status(400).json({ error: 'Username query parameter is required' });
-    }
-
     try {
-        const users = await User.find({ username: { $regex: username, $options: 'i' } });
-        res.status(200).json(users);
+        const query = username ? { username: { $regex: username, $options: 'i' } } : {};
+        const users = await User.find(query)
+            .populate('preferences.drink', 'name')
+            .populate('preferences.restaurant', 'name')
+            .populate('followers', 'username profile_picture')
+            .populate('following', 'username profile_picture');
+
+        const formattedUsers = users.map(user => ({
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            profilePicture: user.profile_picture || "",
+            preferences: {
+                drink: user.preferences.drink.map(drink => drink.name),
+                restaurant: user.preferences.restaurant.map(restaurant => restaurant.name),
+            },
+            followers: user.followers.map(follower => ({
+                id: follower._id,
+                username: follower.username,
+                profilePicture: follower.profile_picture || "",
+            })),
+            following: user.following.map(followingUser => ({
+                id: followingUser._id,
+                username: followingUser.username,
+                profilePicture: followingUser.profile_picture || "",
+            })),
+        }));
+        
+        console.log(formattedUsers);
+        res.status(200).json(formattedUsers);
     } catch (error) {
         errorHandler(error, req, res);
     }
