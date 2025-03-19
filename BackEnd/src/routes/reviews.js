@@ -64,7 +64,7 @@ router.post('/', upload.single('photo'), async (req, res) => {
 });
 
 
-// Get most reviewed drinks (Top 5)
+// Get most reviewed drinks (Top 6)
 router.get('/mostReviewedDrinks', async (req, res) => {
     try {
         const drinks = await Drink.aggregate([
@@ -85,7 +85,7 @@ router.get('/mostReviewedDrinks', async (req, res) => {
                 $sort: { totalReviews: -1 }
             },
             {
-                $limit: 6
+                $limit: 5
             },
             {
                 $project: {
@@ -93,8 +93,7 @@ router.get('/mostReviewedDrinks', async (req, res) => {
                     name: 1,
                     category: 1,
                     recipe: 1,
-                    reviews: 1,
-                    totalReviews: 1
+                    totalReviews: 1 // Exclude the reviews field
                 }
             }
         ]);
