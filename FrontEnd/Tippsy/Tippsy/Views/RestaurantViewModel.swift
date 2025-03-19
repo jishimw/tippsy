@@ -4,6 +4,7 @@ import Combine
 class RestaurantViewModel: ObservableObject {
     @Published var restaurant: Restaurant?
     @Published var profileResponse: ProfileResponse?
+    @Published var userProfiles: [String: User] = [:]
     @Published var errorMessage: String? // For displaying errors to the user
 
     func fetchRestaurantDetails(restaurantName: String) {

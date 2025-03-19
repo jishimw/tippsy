@@ -17,7 +17,7 @@ struct ProfileView: View {
     var body: some View {
         VStack {
             if let user = viewModel.user {
-                AsyncImage(url: URL(string: user.profilePicture)) { image in
+                AsyncImage(url: URL(string: user.profilePicture ?? "")) { image in
                     image.resizable()
                 } placeholder: {
                     Color.gray
@@ -39,7 +39,7 @@ struct ProfileView: View {
                 // Display the first 3 followers' profile pictures
                 HStack {
                     ForEach(user.followers.prefix(3), id: \.self) { follower in
-                        AsyncImage(url: URL(string: follower.profilePicture)) { image in
+                        AsyncImage(url: URL(string: follower.profilePicture ?? "")) { image in
                             image.resizable()
                         } placeholder: {
                             Color.gray
@@ -108,6 +108,9 @@ struct ProfileView: View {
                 Button("Logout") {
                     AuthService.loggedInUserId = nil
                     isLoggedIn = false
+                    viewModel.user = nil // Reset the user data
+                    viewModel.reviews = [] // Clear the reviews
+                    viewModel.followingUsers = [] // Clear the following users
                 }
                 .font(.headline)
                 .foregroundColor(.white)

@@ -10,7 +10,7 @@ import SwiftUI
 struct RestaurantView: View {
     @ObservedObject var viewModel: RestaurantViewModel
     let restaurantName: String
-
+    
     var body: some View {
         VStack {
             if let restaurant = viewModel.restaurant {
@@ -18,13 +18,13 @@ struct RestaurantView: View {
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .padding(.top)
-
+                
                 Text("Average Rating: \(restaurant.averageRating)/5")
                     .font(.title2)
                     .foregroundColor(.gray)
-
+                
                 Divider()
-
+                
                 if restaurant.reviews.isEmpty {
                     Text("No reviews yet")
                         .italic()
@@ -32,14 +32,14 @@ struct RestaurantView: View {
                 } else {
                     List(restaurant.reviews, id: \.id) { review in
                         VStack(alignment: .leading) {
-                            if let user = viewModel.profileResponse?.user {
+                            if let userId = review.userId, let user = viewModel.userProfiles[userId] {
                                 Text("User: \(user.username)")
                                     .font(.headline)
                             } else {
                                 Text("User: Anonymous")
                                     .font(.headline)
                             }
-
+                            
                             Text("Rating: \(review.rating)/5")
                                 .font(.subheadline)
                             Text(review.comment)
@@ -59,8 +59,13 @@ struct RestaurantView: View {
         }
         .onAppear {
             viewModel.fetchRestaurantDetails(restaurantName: restaurantName)
-            // Fetch user profile if needed
-            // viewModel.fetchUserProfile(userId: "someUserId")
+            if let reviews = viewModel.restaurant?.reviews {
+                for review in reviews {
+                    if let userId = review.userId {
+                        viewModel.fetchUserProfile(userId: userId)
+                    }
+                }
+            }
         }
     }
 }

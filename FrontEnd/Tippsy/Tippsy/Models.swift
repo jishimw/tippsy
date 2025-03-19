@@ -11,7 +11,7 @@ struct User: Codable, Hashable, Identifiable {
     let id: String
     var username: String
     let email: String
-    var profilePicture: String
+    var profilePicture: String?
     var preferences: Preferences
     var followers: [Follower]
     var following: [Follower]
@@ -30,7 +30,7 @@ struct User: Codable, Hashable, Identifiable {
 struct Follower: Codable, Identifiable, Hashable {
     let id: String
     let username: String
-    let profilePicture: String
+    let profilePicture: String?
     
     // Conform to Hashable
     func hash(into hasher: inout Hasher) {
@@ -51,6 +51,7 @@ struct Review: Codable, Identifiable {
     let comment: String
     let impairmentLevel: Int
     let photoUrl: String?
+    let userId: String?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -60,6 +61,7 @@ struct Review: Codable, Identifiable {
         case comment
         case impairmentLevel = "impairment_level" // Map JSON field to Swift property
         case photoUrl
+        case userId = "user_id"
     }
 }
 
@@ -88,7 +90,7 @@ struct Restaurant: Codable, Identifiable {
     let reviews: [Review]
 }
 
-struct Drink: Codable {
+struct Drink: Codable, Identifiable {
     let id: String
     let name: String
     let category: String

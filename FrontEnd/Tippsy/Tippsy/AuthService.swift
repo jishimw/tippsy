@@ -141,14 +141,14 @@ struct AuthService {
                 return
             }
 
-            guard let url = URL(string: "\(baseURL)/users/\(userId)/follow") else { return }
+            guard let url = URL(string: "\(baseURL)/users/\(loggedInUserId)/follow") else { return }
 
             var request = URLRequest(url: url)
             request.httpMethod = "POST"
             request.addValue("application/json", forHTTPHeaderField: "Content-Type")
 
             let body: [String: Any] = [
-                "followUserId": loggedInUserId
+                "followUserId": userId
             ]
 
             request.httpBody = try? JSONSerialization.data(withJSONObject: body)
@@ -167,15 +167,17 @@ struct AuthService {
                 completion(.failure(NSError(domain: "", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not logged in"])))
                 return
             }
-
-            guard let url = URL(string: "\(baseURL)/users/\(userId)/unfollow") else { return }
+            
+            print("Unfollow request from \(loggedInUserId) to \(userId)") // Debugging
+            
+            guard let url = URL(string: "\(baseURL)/users/\(loggedInUserId)/unfollow") else { return }
 
             var request = URLRequest(url: url)
             request.httpMethod = "POST"
             request.addValue("application/json", forHTTPHeaderField: "Content-Type")
 
             let body: [String: Any] = [
-                "unfollowUserId": loggedInUserId
+                "unfollowUserId": userId
             ]
 
             request.httpBody = try? JSONSerialization.data(withJSONObject: body)

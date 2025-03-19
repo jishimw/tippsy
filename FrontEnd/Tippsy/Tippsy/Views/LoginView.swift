@@ -32,6 +32,7 @@ struct LoginView: View {
                         switch result {
                         case .success(let token):
                             isLoggedIn = true
+                            let newViewModel = UserViewModel()
                         case .failure(let error):
                             print("Login error: \(error.localizedDescription)") // Debug
                             alertMessage = error.localizedDescription

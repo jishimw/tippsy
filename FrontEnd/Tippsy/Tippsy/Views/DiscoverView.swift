@@ -162,10 +162,6 @@ struct DiscoverView: View {
             .padding(.horizontal)
         }
     }
-
-    
-
-
     
             
     var userList: some View {
@@ -176,7 +172,7 @@ struct DiscoverView: View {
            
             LazyVStack {
                 ForEach(topUsers) { user in
-                    //NavigationLink(destination: EmptyView()) { // Replace with your actual profile view
+                    NavigationLink(destination: OtherUserProfileView(viewModel: UserViewModel(user: user, isFollowing: isFollowingUser(user)))) {
                         HStack {
                             VStack(alignment: .leading) {
                                 Text(user.username)
@@ -187,21 +183,24 @@ struct DiscoverView: View {
                             }
                             Spacer()
                         }
-                        //.padding()
-                        //.background(Color(UIColor.systemBackground))
-                        //.cornerRadius(10)
-                        //.shadow(radius: 2)
-                        //.disabled(true)
-                    //}
+                        .padding()
+                        .background(Color(UIColor.systemBackground))
+                        .cornerRadius(10)
+                        .shadow(radius: 2)
+                    }
                 }
             }
             .padding(.horizontal)
         }
     }
+    
+    private func isFollowingUser(_ user: User) -> Bool {
+
+        guard let loggedInUserId = AuthService.loggedInUserId else { return false }
+        return user.followers.contains { $0.id == loggedInUserId }
+    }
 
 
-    
-    
     var drinkList: some View {
         List(topDrinks,  id: \.id) { drink in
             VStack(alignment: .leading) {
@@ -211,7 +210,6 @@ struct DiscoverView: View {
         }
     }
     
-            
     func fetchData() {
         switch searchCategory {
         case .map:
