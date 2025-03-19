@@ -93,13 +93,21 @@ router.get('/mostReviewedDrinks', async (req, res) => {
                     name: 1,
                     category: 1,
                     recipe: 1,
-                    totalReviews: 1 // Exclude the reviews field
+                    reviews: { $map: { input: '$reviews', as: 'review', in: '$$review._id' } },
+                    totalReviews: 1
                 }
             }
         ]);
+        const formattedDrinks = drinks.map(drink => ({
+            id: drink._id,
+            name: drink.name,
+            category: drink.category,
+            recipe: drink.recipe,
+            reviews: drink.reviews
+        }));
 
-        console.log(drinks);
-        res.status(200).json(drinks);
+        console.log(formattedDrinks);
+        res.status(200).json(formattedDrinks);
     } catch (error) {
         errorHandler(error, req, res);
     }

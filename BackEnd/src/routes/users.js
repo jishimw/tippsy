@@ -7,15 +7,40 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const baseUrl = "http://localhost:3000"; 
 
-// show users with the most followers (Top 5)
+// Show users with the most followers (Top 5)
 router.get('/topUsers', async (req, res) => {
     try {
         const users = await User.find()
             .sort({ followers: -1 })
-            .limit(5);
+            .limit(5)
+            .populate('preferences.drink', 'name')
+            .populate('preferences.restaurant', 'name')
+            .populate('followers', 'username profile_picture')
+            .populate('following', 'username profile_picture');
 
-        console.log(users);
-        res.status(200).json(users);
+        const formattedUsers = users.map(user => ({
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            profilePicture: user.profile_picture || "",
+            preferences: {
+                drink: user.preferences.drink.map(drink => drink.name),
+                restaurant: user.preferences.restaurant.map(restaurant => restaurant.name),
+            },
+            followers: user.followers.map(follower => ({
+                id: follower._id,
+                username: follower.username,
+                profilePicture: follower.profile_picture,
+            })),
+            following: user.following.map(followingUser => ({
+                id: followingUser._id,
+                username: followingUser.username,
+                profilePicture: followingUser.profile_picture,
+            })),
+        }));
+
+        console.log(formattedUsers);
+        res.status(200).json(formattedUsers);
     } catch (error) {
         console.error(error.message);
         res.status(500).json({ message: 'Error fetching top users', error: error.message });
