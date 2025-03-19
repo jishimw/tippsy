@@ -67,14 +67,36 @@ router.post('/', upload.single('photo'), async (req, res) => {
 // Get most reviewed drinks (Top 5)
 router.get('/mostReviewedDrinks', async (req, res) => {
     try {
-        const drinks = await Review.aggregate([
-            { $match: { drink_id: { $ne: null } } },
-            { $group: { _id: '$drink_id', totalReviews: { $sum: 1 } } },
-            { $sort: { totalReviews: -1 } },
-            { $limit: 5 },
-            { $lookup: { from: 'drinks', localField: '_id', foreignField: '_id', as: 'drink' } },
-            { $unwind: '$drink' },
-            { $project: { _id: 0, drink: { name: 1, totalReviews: 1 } } },
+        const drinks = await Drink.aggregate([
+            {
+                $lookup: {
+                    from: 'reviews',
+                    localField: '_id',
+                    foreignField: 'drink_id',
+                    as: 'reviews'
+                }
+            },
+            {
+                $addFields: {
+                    totalReviews: { $size: '$reviews' }
+                }
+            },
+            {
+                $sort: { totalReviews: -1 }
+            },
+            {
+                $limit: 6
+            },
+            {
+                $project: {
+                    _id: 1,
+                    name: 1,
+                    category: 1,
+                    recipe: 1,
+                    reviews: 1,
+                    totalReviews: 1
+                }
+            }
         ]);
 
         console.log(drinks);
