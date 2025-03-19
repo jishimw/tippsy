@@ -1,48 +1,49 @@
-
 //
 //  CreateReviewView.swift
 //  Tippsy
 //
 //  Created by Joelle Ishimwe on 2024-12-24.
+//  Expanded version with Drink Search Bar instead of a drop-down.
+//
 
 import SwiftUI
 import PhotosUI
 
-// MARK: - CreateReviewView
-
 struct CreateReviewView: View {
-    
-    // MARK: State Properties
-    
-    // The currently selected restaurant ID (bar)
     @State private var selectedRestaurant: String = ""
-    
-    // The currently selected drink ID
     @State private var selectedDrink: String = ""
-    
-    // Rating and impairment level
     @State private var rating: Int = 1
     @State private var impairmentLevel: Int = 1
-    
-    // User comment for the review
     @State private var comment: String = ""
-    
-    // Options for restaurants and drinks fetched from the backend
     @State private var restaurantOptions: [(id: String, name: String)] = []
     @State private var drinkOptions: [(id: String, name: String)] = []
-    
-    // Photo selection state
     @State private var selectedPhoto: UIImage? = nil
-    @State private var showPhotoPicker: Bool = false
+    @State private var showPhotoPicker = false
+    @State private var showAlert = false
+    @State private var alertMessage = ""
     
-    // Alert presentation state
-    @State private var showAlert: Bool = false
-    @State private var alertMessage: String = ""
+    // New state properties for drink search bar functionality
+    @State private var drinkSearchText: String = ""
+    @State private var showDrinkSuggestions: Bool = false
+    @State private var restaurantSearchText: String = ""
+    @State private var showRestaurantSuggestions: Bool = false
     
-    // MARK: Body
+    // Computed property to filter drink suggestions based on the search text.
+    private var drinkSearchSuggestions: [(id: String, name: String)] {
+        if drinkSearchText.isEmpty { return [] }
+        let filtered = drinkOptions.filter { $0.name.lowercased().contains(drinkSearchText.lowercased()) }
+        return Array(filtered.prefix(3))
+    }
+
+    private var restaurantSearchSuggestions: [(id: String, name: String)] {
+        if restaurantSearchText.isEmpty { return [] }
+        let filtered = restaurantOptions.filter { $0.name.lowercased().contains(restaurantSearchText.lowercased()) }
+        return Array(filtered.prefix(3))
+    }
+    
     var body: some View {
         ZStack {
-            // Background gradient for visual appeal.
+            // Background gradient
             LinearGradient(
                 gradient: Gradient(colors: [Color.orange.opacity(0.3), Color.red.opacity(0.5)]),
                 startPoint: .top,
@@ -50,11 +51,8 @@ struct CreateReviewView: View {
             )
             .ignoresSafeArea()
             
-            // Using ScrollView for vertical scrolling.
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    
-                    // Title
                     Text("Create a Review")
                         .font(.largeTitle)
                         .fontWeight(.bold)
@@ -64,23 +62,76 @@ struct CreateReviewView: View {
                     // Photo Picker Section
                     photoPickerSection
                     
-                    // Restaurant Picker Section
-                    pickerSection(title: "Select Restaurant", selection: $selectedRestaurant, options: restaurantOptions)
+                    // Restaurant Picker Section (remains as a drop-down)
+                    restaurantSearchSection
                         .onAppear {
-                            // Fetch restaurant data every time the view appears.
                             fetchRestaurants()
                         }
                     
-                    // Drink Picker Section
-                    pickerSection(title: "Select Drink", selection: $selectedDrink, options: drinkOptions)
-                        .onAppear {
-                            fetchDrinks()
+                    // Drink Search Section (replaces drop-down with a search bar)
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Search for Drink")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        
+                        if selectedDrink.isEmpty {
+                            VStack(alignment: .leading, spacing: 0) {
+                                TextField("Search for a drink...", text: $drinkSearchText, onEditingChanged: { isEditing in
+                                    showDrinkSuggestions = isEditing
+                                })
+                                .onSubmit {
+                                    if !drinkSearchText.trimmingCharacters(in: .whitespaces).isEmpty {
+                                        // Check for an exact match first
+                                        if let match = drinkOptions.first(where: { $0.name.lowercased() == drinkSearchText.lowercased() }) {
+                                            selectedDrink = match.id
+                                        } else {
+                                            // Otherwise, use the typed text
+                                            selectedDrink = drinkSearchText
+                                        }
+                                    }
+                                }
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .padding(.horizontal)
+                                
+                                if showDrinkSuggestions, !drinkSearchSuggestions.isEmpty {
+                                    VStack(alignment: .leading, spacing: 0) {
+                                        ForEach(drinkSearchSuggestions, id: \.id) { drink in
+                                            Text(drink.name)
+                                                .padding(8)
+                                                .onTapGesture {
+                                                    selectedDrink = drink.id
+                                                    drinkSearchText = drink.name
+                                                    showDrinkSuggestions = false
+                                                }
+                                        }
+                                    }
+                                    .background(Color(.systemGray6))
+                                    .cornerRadius(8)
+                                    .padding(.horizontal)
+                                }
+                            }
+                        } else {
+                            HStack {
+                                Text("Selected Drink: \(drinkSearchText)")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                Button("Change") {
+                                    selectedDrink = ""
+                                    drinkSearchText = ""
+                                }
+                                .foregroundColor(.blue)
+                            }
+                            .padding(.horizontal)
                         }
+                    }
+                    .onAppear {
+                        fetchDrinks()
+                    }
                     
-                    // Rating Stepper Section
+                    // Rating Picker Section
                     stepperSection(title: "Rating", value: $rating, range: 1...5)
                     
-                    // Impairment Level Stepper Section
+                    // Impairment Level Picker Section
                     stepperSection(title: "Impairment Level", value: $impairmentLevel, range: 1...5)
                     
                     // Comment TextField Section
@@ -90,33 +141,22 @@ struct CreateReviewView: View {
                     submitButton
                 }
                 .padding()
-                // Extra onAppear call to log a message (for commit history details)
-                .onAppear {
-                    print("CreateReviewView appeared - refreshing data.")
-                }
-            } // End ScrollView
-        } // End ZStack
+            }
+        }
         .sheet(isPresented: $showPhotoPicker) {
-            // Present the PhotoPicker view.
             PhotoPicker(selectedImage: $selectedPhoto)
         }
         .alert(isPresented: $showAlert) {
-            // Show an alert when needed.
             Alert(title: Text("Review Submission"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
         }
     }
-    
-    // MARK: - Subviews
-    
-    /// Section for the photo picker.
+
     private var photoPickerSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Add a Photo")
                 .font(.headline)
                 .foregroundColor(.white)
-            
             if let photo = selectedPhoto {
-                // Display the chosen photo.
                 Image(uiImage: photo)
                     .resizable()
                     .scaledToFit()
@@ -124,7 +164,6 @@ struct CreateReviewView: View {
                     .cornerRadius(10)
                     .shadow(radius: 5)
             } else {
-                // Button to open photo picker.
                 Button(action: {
                     showPhotoPicker = true
                 }) {
@@ -144,7 +183,6 @@ struct CreateReviewView: View {
         }
     }
     
-    /// Generic Picker Section for both restaurant and drink pickers.
     private func pickerSection(title: String, selection: Binding<String>, options: [(id: String, name: String)]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
@@ -152,12 +190,10 @@ struct CreateReviewView: View {
                 .foregroundColor(.white)
             
             Picker(title, selection: selection) {
-                // For restaurant picker, add a default option.
                 if title == "Select Restaurant" {
                     Text("Home").tag("Home")
                 }
                 ForEach(options, id: \.id) { option in
-                    // Display each option's name.
                     Text(option.name).tag(option.id)
                 }
             }
@@ -169,13 +205,11 @@ struct CreateReviewView: View {
         }
     }
     
-    /// Generic stepper section for numerical input.
     private func stepperSection(title: String, value: Binding<Int>, range: ClosedRange<Int>) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("\(title): \(value.wrappedValue)")
                 .font(.headline)
                 .foregroundColor(.white)
-            
             Stepper("", value: value, in: range)
                 .padding()
                 .background(Color.white.opacity(0.2))
@@ -184,13 +218,11 @@ struct CreateReviewView: View {
         }
     }
     
-    /// Comment section with a text field.
     private var commentSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Write your comment...")
                 .font(.headline)
                 .foregroundColor(.white)
-            
             TextField("", text: $comment)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding()
@@ -199,13 +231,66 @@ struct CreateReviewView: View {
                 .shadow(radius: 5)
         }
     }
+
+    private var restaurantSearchSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Select Restaurant")
+                .font(.headline)
+                .foregroundColor(.white)
+            
+            if selectedRestaurant.isEmpty {
+                VStack(alignment: .leading, spacing: 0) {
+                    // Search field for restaurants
+                    TextField("Search for a restaurant...", text: $restaurantSearchText, onEditingChanged: { isEditing in
+                        showRestaurantSuggestions = isEditing
+                    })
+                    .onSubmit {
+                        if !restaurantSearchText.trimmingCharacters(in: .whitespaces).isEmpty {
+                            // If user hits return without selecting a suggestion, use the typed value.
+                            selectedRestaurant = restaurantSearchText
+                        }
+                    }
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding(.horizontal)
+                    
+                    // Display suggestions if available
+                    if showRestaurantSuggestions, !restaurantSearchSuggestions.isEmpty {
+                        VStack(alignment: .leading, spacing: 0) {
+                            ForEach(restaurantSearchSuggestions, id: \.id) { restaurant in
+                                Text(restaurant.name)
+                                    .padding(8)
+                                    .onTapGesture {
+                                        // When a suggestion is tapped, set the selection.
+                                        selectedRestaurant = restaurant.id
+                                        restaurantSearchText = restaurant.name
+                                        showRestaurantSuggestions = false
+                                    }
+                            }
+                        }
+                        .background(Color(.systemGray6))
+                        .cornerRadius(8)
+                        .padding(.horizontal)
+                    }
+                }
+            } else {
+                // Display the selected restaurant and a change button.
+                HStack {
+                    Text("Selected Restaurant: \(restaurantSearchText)")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    Button("Change") {
+                        selectedRestaurant = ""
+                        restaurantSearchText = ""
+                    }
+                    .foregroundColor(.blue)
+                }
+                .padding(.horizontal)
+            }
+        }
+    }
     
-    /// Submit button section.
     private var submitButton: some View {
-        Button(action: {
-            // Call submitReview when button pressed.
-            submitReview()
-        }) {
+        Button(action: submitReview) {
             Text("Submit Review")
                 .font(.headline)
                 .foregroundColor(.white)
@@ -218,111 +303,73 @@ struct CreateReviewView: View {
         .padding(.vertical)
     }
     
-    // MARK: - Networking and Helper Functions
-    
-    /// Fetches restaurant data from the server.
     private func fetchRestaurants() {
-        guard let url = URL(string: "http://localhost:3000/search/allRestaurants") else {
-            print("Invalid URL for fetching restaurants")
-            return
-        }
+        guard let url = URL(string: "http://localhost:3000/search/allRestaurants") else { return }
         
-        let task = URLSession.shared.dataTask(with: url) { data, response, error in
-            // Log errors if they occur.
+        URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
                 print("Error fetching restaurants: \(error.localizedDescription)")
                 return
             }
-            
-            // Parse JSON response.
             if let data = data, let json = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
                 let restaurants = json.compactMap { restaurant -> (id: String, name: String)? in
-                    // Extract restaurant id and name.
-                    guard let id = restaurant["_id"] as? String,
-                          let name = restaurant["name"] as? String else {
-                        return nil
-                    }
+                    guard let id = restaurant["_id"] as? String, let name = restaurant["name"] as? String else { return nil }
                     return (id: id, name: name)
                 }
-                
-                // Update UI on main thread.
                 DispatchQueue.main.async {
                     self.restaurantOptions = restaurants
                     if self.selectedRestaurant.isEmpty, let firstRestaurant = restaurants.first {
                         self.selectedRestaurant = firstRestaurant.id
-                        print("Default restaurant set to: \(firstRestaurant.name)")
                     }
                 }
             } else {
-                print("Failed to parse restaurants JSON response")
+                print("Failed to parse restaurants response.")
             }
-        }
-        task.resume()
+        }.resume()
     }
     
-    /// Fetches drink data from the server.
     private func fetchDrinks() {
-        guard let url = URL(string: "http://localhost:3000/search/allDrinks") else {
-            print("Invalid URL for fetching drinks")
-            return
-        }
+        guard let url = URL(string: "http://localhost:3000/search/allDrinks") else { return }
         
-        let task = URLSession.shared.dataTask(with: url) { data, response, error in
+        URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
                 print("Error fetching drinks: \(error.localizedDescription)")
                 return
             }
-            
             if let data = data {
                 if let json = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
                     let drinks = json.compactMap { drink -> (id: String, name: String)? in
-                        guard let id = drink["_id"] as? String,
-                              let name = drink["name"] as? String else {
-                            return nil
-                        }
+                        guard let id = drink["_id"] as? String, let name = drink["name"] as? String else { return nil }
                         return (id: id, name: name)
                     }
                     DispatchQueue.main.async {
                         self.drinkOptions = drinks
                         if self.selectedDrink.isEmpty, let firstDrink = drinks.first {
                             self.selectedDrink = firstDrink.id
-                            print("Default drink set to: \(firstDrink.name)")
+                            drinkSearchText = firstDrink.name
                         }
                     }
                 } else {
-                    print("Failed to parse drinks JSON response")
+                    print("Failed to parse drinks response.")
                 }
             }
-        }
-        task.resume()
+        }.resume()
     }
     
-    /// Submits the review using a multipart/form-data HTTP POST request.
     private func submitReview() {
-        // Ensure the user is logged in.
         guard let userId = AuthService.loggedInUserId else {
             alertMessage = "User not logged in."
             showAlert = true
             return
         }
+        guard let url = URL(string: "http://localhost:3000/reviews") else { return }
         
-        // Validate review URL.
-        guard let url = URL(string: "http://localhost:3000/reviews") else {
-            print("Invalid URL for submitting review")
-            return
-        }
-        
-        // Create a boundary string.
         let boundary = UUID().uuidString
-        
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         
-        // Build the HTTP body data.
         var body = Data()
-        
-        // Dictionary of parameters for the review submission.
         let parameters: [String: Any?] = [
             "user_id": userId,
             "drink_id": selectedDrink,
@@ -332,14 +379,14 @@ struct CreateReviewView: View {
             "impairment_level": impairmentLevel
         ]
         
-        // Append parameters to the body.
         for (key, value) in parameters {
             if let value = value {
-                appendFormField(key: key, value: "\(value)", boundary: boundary, to: &body)
+                body.append("--\(boundary)\r\n".data(using: .utf8)!)
+                body.append("Content-Disposition: form-data; name=\"\(key)\"\r\n\r\n".data(using: .utf8)!)
+                body.append("\(value)\r\n".data(using: .utf8)!)
             }
         }
         
-        // Append photo data if available.
         if let photo = selectedPhoto, let imageData = photo.jpegData(compressionQuality: 0.8) {
             body.append("--\(boundary)\r\n".data(using: .utf8)!)
             body.append("Content-Disposition: form-data; name=\"photo\"; filename=\"photo.jpg\"\r\n".data(using: .utf8)!)
@@ -348,11 +395,9 @@ struct CreateReviewView: View {
             body.append("\r\n".data(using: .utf8)!)
         }
         
-        // Append closing boundary.
         body.append("--\(boundary)--\r\n".data(using: .utf8)!)
         request.httpBody = body
         
-        // Create the data task to send the review.
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 DispatchQueue.main.async {
@@ -361,7 +406,6 @@ struct CreateReviewView: View {
                 }
                 return
             }
-            // On success, update UI and reset the form.
             DispatchQueue.main.async {
                 self.alertMessage = "Review submitted successfully!"
                 self.showAlert = true
@@ -370,41 +414,22 @@ struct CreateReviewView: View {
         }.resume()
     }
     
-    /// Helper function to append a form field to the HTTP body data.
-    private func appendFormField(key: String, value: String, boundary: String, to body: inout Data) {
-        if let dashBoundary = "--\(boundary)\r\n".data(using: .utf8) {
-            body.append(dashBoundary)
-        }
-        if let contentDisposition = "Content-Disposition: form-data; name=\"\(key)\"\r\n\r\n".data(using: .utf8) {
-            body.append(contentDisposition)
-        }
-        if let valueData = "\(value)\r\n".data(using: .utf8) {
-            body.append(valueData)
-        }
-    }
-    
-    /// Resets all form fields to their initial state.
     private func resetForm() {
-        // Reset all state variables.
         selectedRestaurant = ""
         selectedDrink = ""
         rating = 1
         impairmentLevel = 1
         comment = ""
         selectedPhoto = nil
-        
-        // Log the reset action for debugging purposes.
-        print("Form reset to default values.")
+        drinkSearchText = ""
+        showDrinkSuggestions = false
     }
 }
-
-// MARK: - PhotoPicker
 
 struct PhotoPicker: UIViewControllerRepresentable {
     @Binding var selectedImage: UIImage?
     
     func makeUIViewController(context: Context) -> PHPickerViewController {
-        // Configure the photo picker to only show images.
         var config = PHPickerConfiguration()
         config.filter = .images
         let picker = PHPickerViewController(configuration: config)
@@ -412,12 +437,10 @@ struct PhotoPicker: UIViewControllerRepresentable {
         return picker
     }
     
-    func updateUIViewController(_ uiViewController: PHPickerViewController, context: Context) {
-        // No update needed for now.
-    }
+    func updateUIViewController(_ uiViewController: PHPickerViewController, context: Context) {}
     
     func makeCoordinator() -> Coordinator {
-        return Coordinator(self)
+        Coordinator(self)
     }
     
     class Coordinator: NSObject, PHPickerViewControllerDelegate {
@@ -428,16 +451,10 @@ struct PhotoPicker: UIViewControllerRepresentable {
         }
         
         func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-            // Dismiss the picker.
             picker.dismiss(animated: true)
             
-            // Check if a provider is available.
-            guard let provider = results.first?.itemProvider else {
-                print("No photo provider found.")
-                return
-            }
+            guard let provider = results.first?.itemProvider else { return }
             
-            // Load the image if possible.
             if provider.canLoadObject(ofClass: UIImage.self) {
                 provider.loadObject(ofClass: UIImage.self) { image, _ in
                     DispatchQueue.main.async {
@@ -448,8 +465,6 @@ struct PhotoPicker: UIViewControllerRepresentable {
         }
     }
 }
-
-// MARK: - Preview
 
 struct CreateReviewView_Preview: PreviewProvider {
     static var previews: some View {
