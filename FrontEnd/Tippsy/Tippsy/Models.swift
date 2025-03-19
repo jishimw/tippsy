@@ -89,7 +89,7 @@ struct Restaurant: Codable, Identifiable {
 }
 
 struct Drink: Codable {
-    let _id: String
+    let id: String
     let name: String
     let category: String
     let recipe: Recipe

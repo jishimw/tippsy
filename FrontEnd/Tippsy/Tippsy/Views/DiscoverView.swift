@@ -43,25 +43,27 @@ struct DiscoverView: View {
     
     var body: some View {
         NavigationStack {
-            VStack {
-                categorySelector
-                searchBar
-                if searchCategory == .map {
-                    cityPicker
-                    mapView
-                    venueList
-                } else if searchCategory == .users {
-                    userList
-                } else if searchCategory == .drinks {
-                    drinkList
+            ScrollView {
+                VStack {
+                    categorySelector
+                    searchBar
+                    if searchCategory == .map {
+                        cityPicker
+                        mapView
+                        venueList
+                    } else if searchCategory == .users {
+                        userList
+                    } else if searchCategory == .drinks {
+                        drinkList
+                    }
                 }
             }
-            .navigationTitle("Discover")
-            .padding(.top, 10)
-            .onAppear {
-                fetchData()
+                .navigationTitle("Discover")
+                .padding(.top, 10)
+                .onAppear {
+                    fetchData()
+                }
             }
-        }
     }
     
     var categorySelector: some View {
@@ -124,26 +126,38 @@ struct DiscoverView: View {
     
     // Venue List subview
     var venueList: some View {
-        List(filteredVenues) { venue in
-            NavigationLink(destination: RestaurantView(
-                viewModel: RestaurantViewModel(),
-                restaurantName: venue.name
-            )) {
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text(venue.name)
-                            .font(.headline)
-                        Text(venue.type)
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
+        VStack(alignment: .leading) {
+            Text("Venues")
+                .font(.headline)
+                .padding(.leading)
+            
+            LazyVStack {
+                ForEach(filteredVenues) { venue in
+                    NavigationLink(destination: RestaurantView(
+                        viewModel: RestaurantViewModel(),
+                        restaurantName: venue.name
+                    )) {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(venue.name)
+                                    .font(.headline)
+                                Text(venue.type)
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                            Spacer()
+                        }
+                        .padding()
+                        .background(Color(UIColor.systemBackground))
+                        .cornerRadius(10)
+                        .shadow(radius: 2)
                     }
-                    Spacer()
                 }
-                .padding(.vertical, 5)
             }
+            .padding(.horizontal)
         }
-        .listStyle(InsetGroupedListStyle())
     }
+
     
 
 
