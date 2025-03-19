@@ -96,6 +96,8 @@ struct Drink: Codable, Identifiable {
     let category: String
     let recipe: Recipe
     let reviews: [String]
+    let averageRating: String
+    let totalReviews: Int
 }
 
 struct Recipe: Codable {

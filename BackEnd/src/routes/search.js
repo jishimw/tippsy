@@ -6,22 +6,38 @@ const mongoose = require('mongoose');
 errorHandler = require('../utils/errorhandler');
 const User = require('../models/User');
 
-// Search (query) for drinks by name or category
 router.get('/drinks', async (req, res) => {
     const { query } = req.query;
 
-    if (!query) {
-        return res.status(400).json({ error: 'Query parameter is required' });
-    }
-
     try {
-        const drinks = await Drink.find({
-            $or: [
-                { name: { $regex: query, $options: 'i' } },
-                { category: { $regex: query, $options: 'i' } },
-            ],
-        });
-        res.status(200).json(drinks);
+        let searchCriteria = {};
+        if (query) {
+            searchCriteria = {
+                $or: [
+                    { name: { $regex: query, $options: 'i' } },
+                    { category: { $regex: query, $options: 'i' } },
+                ],
+            };
+        }
+        const drinks = await Drink.find(searchCriteria).populate('reviews');
+
+        const formattedDrinks = drinks.map(drink => ({
+            id: drink._id,
+            name: drink.name,
+            category: drink.category,
+            recipe: {
+                ingredients: drink.recipe.ingredients,
+                instructions: drink.recipe.instructions,
+            },
+            reviews: drink.reviews,
+            averageRating: drink.reviews.length > 0
+                ? drink.reviews.reduce((acc, review) => acc + review.rating, 0) / drink.reviews.length
+                : 0,
+            totalReviews: drink.reviews.length,
+        }));
+
+        console.log(formattedDrinks);
+        res.status(200).json(formattedDrinks);
     } catch (error) {
         errorHandler(error, req, res);
     }
