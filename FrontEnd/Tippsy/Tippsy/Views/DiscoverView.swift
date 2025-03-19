@@ -92,6 +92,11 @@ struct DiscoverView: View {
                 .textFieldStyle(RoundedBorderTextFieldStyle())
         }
         .padding(.horizontal)
+        .onChange(of: searchText) { _ in
+            if searchCategory == .users {
+                fetchData()
+            }
+        }
     }
     
     var cityPicker: some View {
@@ -164,11 +169,36 @@ struct DiscoverView: View {
     
             
     var userList: some View {
-        List(topUsers, id: \.id) { user in
-            Text(user.username)
+        VStack(alignment: .leading) {
+            Text("Users")
+                .font(.headline)
+                .padding(.leading)
+           
+            LazyVStack {
+                ForEach(topUsers) { user in
+                    NavigationLink(destination: ProfileView(user: user)) { // Replace with your actual profile view
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(user.username)
+                                    .font(.headline)
+                                Text(user.email) // Optional: Add additional user info if needed
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                            Spacer()
+                        }
+                        .padding()
+                        .background(Color(UIColor.systemBackground))
+                        .cornerRadius(10)
+                        .shadow(radius: 2)
+                    }
+                }
+            }
+            .padding(.horizontal)
         }
-        
     }
+
+
     
     
     var drinkList: some View {
@@ -186,20 +216,18 @@ struct DiscoverView: View {
         case .map:
             searchVenues()
         case .users:
-            SearchService.fetchTopUsers { users in
-                //DispatchQueue.main.async {
-                  //  self.topUsers = users
-                    //print("Fetched users: \(users)")
-                //}
-                print("Raw user response: \(users)")
+            SearchService.fetchTopUsers(query: searchText) { users in
+                DispatchQueue.main.async {
+                    self.topUsers = searchText.isEmpty ? Array(users.prefix(5)) : users
+                }
             }
         case .drinks:
             SearchService.fetchTopDrinks { drinks in
-                //DispatchQueue.main.async {
-                  //  self.topDrinks = drinks
-                    //print("Fetched drinks: \(drinks)")
-                //}
-                print("Raw drink response: \(drinks)")
+                DispatchQueue.main.async {
+                  self.topDrinks = drinks
+                    print("Fetched drinks: \(drinks)")
+                }
+                //print("Raw drink response: \(drinks)")
             }
         }
     }

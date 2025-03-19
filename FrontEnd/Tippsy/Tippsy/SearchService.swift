@@ -13,9 +13,21 @@ struct SearchService {
     static let baseURL = "http://localhost:3000"
     
     
-    static func fetchTopUsers(completion: @escaping ([User]) -> Void) {
-        guard let url = URL(string: "\(baseURL)/users/topUsers") else { return }
-        
+    static func fetchTopUsers(query: String, completion: @escaping ([User]) -> Void) {
+        guard var urlComponents = URLComponents(string: "\(baseURL)/search/users") else {
+            completion([])
+            return
+        }
+       
+        if !query.isEmpty {
+            urlComponents.queryItems = [URLQueryItem(name: "username", value: query)]
+        }
+       
+        guard let url = urlComponents.url else {
+            completion([])
+            return
+        }
+       
         URLSession.shared.dataTask(with: url) { data, response, error in
             guard let data = data, error == nil else {
                 print("❌ Error fetching users: \(error?.localizedDescription ?? "Unknown error")")
@@ -24,13 +36,14 @@ struct SearchService {
             }
             do {
                 let users = try JSONDecoder().decode([User].self, from: data)
-                DispatchQueue.main.async { completion(Array(users.prefix(5))) }
+                DispatchQueue.main.async { completion(users) }
             } catch {
                 print("Error decoding users: \(error)")
                 DispatchQueue.main.async { completion([]) }
             }
         }.resume()
     }
+
     
     static func fetchTopDrinks(completion: @escaping ([Drink]) -> Void) {
         guard let url = URL(string: "\(baseURL)/reviews/mostReviewedDrinks") else { return }
