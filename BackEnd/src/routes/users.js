@@ -30,12 +30,12 @@ router.get('/topUsers', async (req, res) => {
             followers: user.followers.map(follower => ({
                 id: follower._id,
                 username: follower.username,
-                profilePicture: follower.profile_picture,
+                profilePicture: follower.profile_picture || "",
             })),
             following: user.following.map(followingUser => ({
                 id: followingUser._id,
                 username: followingUser.username,
-                profilePicture: followingUser.profile_picture,
+                profilePicture: followingUser.profile_picture || "",
             })),
         }));
 
