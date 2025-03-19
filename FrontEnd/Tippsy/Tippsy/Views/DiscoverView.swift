@@ -176,7 +176,7 @@ struct DiscoverView: View {
            
             LazyVStack {
                 ForEach(topUsers) { user in
-                    NavigationLink(destination: ProfileView(user: user)) { // Replace with your actual profile view
+                    //NavigationLink(destination: EmptyView()) { // Replace with your actual profile view
                         HStack {
                             VStack(alignment: .leading) {
                                 Text(user.username)
@@ -187,11 +187,12 @@ struct DiscoverView: View {
                             }
                             Spacer()
                         }
-                        .padding()
-                        .background(Color(UIColor.systemBackground))
-                        .cornerRadius(10)
-                        .shadow(radius: 2)
-                    }
+                        //.padding()
+                        //.background(Color(UIColor.systemBackground))
+                        //.cornerRadius(10)
+                        //.shadow(radius: 2)
+                        //.disabled(true)
+                    //}
                 }
             }
             .padding(.horizontal)
