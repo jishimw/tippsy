@@ -27,7 +27,7 @@ router.get('/drinks', async (req, res) => {
             category: drink.category,
             recipe: {
                 ingredients: drink.recipe.ingredients,
-                instructions: drink.recipe.instructions,
+                instructions: drink.recipe.instructions || "",
             },
             reviews: drink.reviews,
             averageRating: drink.reviews.length > 0

@@ -93,7 +93,7 @@ struct DiscoverView: View {
         }
         .padding(.horizontal)
         .onChange(of: searchText) { _ in
-            if searchCategory == .users {
+            if searchCategory == .users || searchCategory == .drinks {
                 fetchData()
             }
         }
@@ -202,13 +202,31 @@ struct DiscoverView: View {
 
 
     var drinkList: some View {
-        List(topDrinks,  id: \.id) { drink in
-            VStack(alignment: .leading) {
-                Text(drink.name).font(.headline)
-                Text(drink.category).font(.subheadline).foregroundColor(.gray)
+        VStack(alignment: .leading) {
+            Text("Drinks")
+                .font(.headline)
+                .padding(.leading)
+           
+            LazyVStack {
+                ForEach(topDrinks) { drink in
+                    VStack(alignment: .leading) {
+                        Text(drink.name)
+                            .font(.headline)
+                        Text(drink.category)
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                    }
+                    .padding()
+                    .background(Color(UIColor.systemBackground))
+                    .cornerRadius(10)
+                    .shadow(radius: 2)
+                    .padding(.horizontal)
+                }
             }
+            .padding(.horizontal)
         }
     }
+
     
     func fetchData() {
         switch searchCategory {
@@ -221,12 +239,10 @@ struct DiscoverView: View {
                 }
             }
         case .drinks:
-            SearchService.fetchTopDrinks { drinks in
+            SearchService.fetchTopDrinks(query: searchText) { drinks in
                 DispatchQueue.main.async {
-                  self.topDrinks = drinks
-                    print("Fetched drinks: \(drinks)")
+                    self.topDrinks = searchText.isEmpty ? Array(drinks.prefix(5)) : drinks
                 }
-                //print("Raw drink response: \(drinks)")
             }
         }
     }
