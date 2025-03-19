@@ -2,6 +2,21 @@ import SwiftUI
 import MapKit
 
 struct DiscoverView: View {
+    
+    
+    // City struct and array
+    struct City {
+        let name: String
+        let latitude: Double
+        let longitude: Double
+    }
+    
+    let cities = [
+        City(name: "San Francisco", latitude: 37.7749, longitude: -122.4194),
+        City(name: "London", latitude: 42.9849, longitude: -81.2453),
+        City(name: "Toronto", latitude: 43.6532, longitude: -79.3832)
+    ]
+    
     enum SearchCategory {
         case map, users, drinks
     }
@@ -19,6 +34,12 @@ struct DiscoverView: View {
     @State private var searchText = ""
     
     
+    var filteredVenues: [Venue] {
+        if searchText.isEmpty {
+            return venues
+        }
+        return venues.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+    }
     
     var body: some View {
         NavigationStack {
@@ -73,7 +94,7 @@ struct DiscoverView: View {
     
     var cityPicker: some View {
         Picker("Select City", selection: $selectedCity) {
-            ForEach(["San Francisco", "London", "Toronto"], id: \..self) { city in
+            ForEach(cities.map { $0.name }, id: \.self) { city in
                 Text(city).tag(city)
             }
         }
@@ -84,19 +105,44 @@ struct DiscoverView: View {
         }
     }
     
-    var mapView: some View {
-        Map(coordinateRegion: $region, annotationItems: venues) { venue in
-            MapMarker(coordinate: venue.coordinate, tint: .blue)
-        }
-        .frame(height: 300)
-        .cornerRadius(10)
-        .padding()
-    }
     
-    var venueList: some View {
-        List(venues) { venue in
-            Text(venue.name)
+    // Map View subview
+        var mapView: some View {
+            Map(coordinateRegion: $region, annotationItems: filteredVenues) { venue in
+                MapMarker(coordinate: venue.coordinate, tint: .blue)
+            }
+            .frame(height: 300)
+            .cornerRadius(10)
+            .padding()
+            .gesture(
+                DragGesture()
+                    .onEnded { _ in
+                        searchVenues()
+                    }
+            )
         }
+    
+    // Venue List subview
+    var venueList: some View {
+        List(filteredVenues) { venue in
+            NavigationLink(destination: RestaurantView(
+                viewModel: RestaurantViewModel(),
+                restaurantName: venue.name
+            )) {
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text(venue.name)
+                            .font(.headline)
+                        Text(venue.type)
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                    }
+                    Spacer()
+                }
+                .padding(.vertical, 5)
+            }
+        }
+        .listStyle(InsetGroupedListStyle())
     }
     
 
@@ -104,7 +150,7 @@ struct DiscoverView: View {
     
             
     var userList: some View {
-        List(topUsers, id: \..id) { user in
+        List(topUsers, id: \.id) { user in
             Text(user.username)
         }
         
@@ -112,7 +158,7 @@ struct DiscoverView: View {
     
     
     var drinkList: some View {
-        List(topDrinks) { drink in
+        List(topDrinks,  id: \._id) { drink in
             VStack(alignment: .leading) {
                 Text(drink.name).font(.headline)
                 Text(drink.category).font(.subheadline).foregroundColor(.gray)
@@ -127,28 +173,34 @@ struct DiscoverView: View {
             searchVenues()
         case .users:
             SearchService.fetchTopUsers { users in
-                DispatchQueue.main.async {
-                    self.topUsers = users
-                }
+                //DispatchQueue.main.async {
+                  //  self.topUsers = users
+                    //print("Fetched users: \(users)")
+                //}
+                print("Raw user response: \(users)")
             }
         case .drinks:
             SearchService.fetchTopDrinks { drinks in
-                DispatchQueue.main.async {
-                    self.topDrinks = drinks
-                }
+                //DispatchQueue.main.async {
+                  //  self.topDrinks = drinks
+                    //print("Fetched drinks: \(drinks)")
+                //}
+                print("Raw drink response: \(drinks)")
             }
         }
     }
             
             
+    // Update region based on selected city and refresh venues
     private func updateRegion(for cityName: String) {
-        let cityCoordinates = [
-            "San Francisco": CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
-            "London": CLLocationCoordinate2D(latitude: 42.9849, longitude: -81.2453),
-            "Toronto": CLLocationCoordinate2D(latitude: 43.6532, longitude: -79.3832)
-        ]
-        if let coord = cityCoordinates[cityName] {
-            region = MKCoordinateRegion(center: coord, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))
+        if let city = cities.first(where: { $0.name == cityName }) {
+            region = MKCoordinateRegion(
+                center: CLLocationCoordinate2D(
+                    latitude: city.latitude,
+                    longitude: city.longitude
+                ),
+                span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+            )
             searchVenues()
         }
     }
@@ -171,17 +223,17 @@ struct DiscoverView: View {
                     longitude: item.placemark.coordinate.longitude
                 )
             }
-            
-            // this Check if London is the selected city and append BarX.
-            if self.selectedCity == "London" {
-                let barX = Venue(
-                    name: "BarX",
-                    type: "Bar",
-                    latitude: 42.9849,
-                    longitude: -81.2453
-                )
-                newVenues.append(barX)
-            }
+
+        // this Check if London is the selected city and append BarX.
+        if self.selectedCity == "London" {
+            let barX = Venue(
+                name: "BarX",
+                type: "Bar",
+                latitude: 42.9849,
+                longitude: -81.2453
+            )
+            newVenues.append(barX)
+        }
             
             DispatchQueue.main.async {
                 self.venues = newVenues
@@ -190,6 +242,7 @@ struct DiscoverView: View {
     }
 }
         
+// Venue Data Model
 struct Venue: Identifiable {
     let id = UUID()
     let name: String
@@ -201,7 +254,7 @@ struct Venue: Identifiable {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
 }
-        
+
 struct DiscoverView_Previews: PreviewProvider {
     static var previews: some View {
         DiscoverView()

@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct User: Codable, Hashable {
+struct User: Codable, Hashable, Identifiable {
     let id: String
     var username: String
     let email: String
@@ -88,8 +88,8 @@ struct Restaurant: Codable, Identifiable {
     let reviews: [Review]
 }
 
-struct Drink: Codable, Identifiable {
-    let id: String
+struct Drink: Codable {
+    let _id: String
     let name: String
     let category: String
     let recipe: Recipe

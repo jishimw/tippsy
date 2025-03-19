@@ -18,6 +18,7 @@ struct SearchService {
         
         URLSession.shared.dataTask(with: url) { data, response, error in
             guard let data = data, error == nil else {
+                print("❌ Error fetching users: \(error?.localizedDescription ?? "Unknown error")")
                 DispatchQueue.main.async { completion([]) }
                 return
             }
@@ -36,9 +37,18 @@ struct SearchService {
             
             URLSession.shared.dataTask(with: url) { data, response, error in
                 guard let data = data, error == nil else {
+                    print("❌ Error fetching users: \(error?.localizedDescription ?? "Unknown error")")
                     DispatchQueue.main.async { completion([]) }
                     return
                 }
+                
+                if let httpResponse = response as? HTTPURLResponse {
+                            print("📡 Status Code: \(httpResponse.statusCode)")
+                        }
+
+                        print("📜 Raw User Data: \(String(data: data, encoding: .utf8) ?? "nil")")
+                
+                
                 do {
                     let drinks = try JSONDecoder().decode([Drink].self, from: data)
                     DispatchQueue.main.async { completion(Array(drinks.prefix(5))) }
