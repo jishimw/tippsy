@@ -78,5 +78,3 @@ struct SearchService {
     }
 
 }
-
-

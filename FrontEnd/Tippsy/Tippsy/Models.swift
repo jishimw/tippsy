@@ -44,7 +44,7 @@ struct Follower: Codable, Identifiable, Hashable {
 }
 
 struct Review: Codable, Identifiable {
-    let id: String
+    let id: String?
     let drinkName: String?
     let restaurantName: String?
     let rating: Int
@@ -95,12 +95,13 @@ struct Drink: Codable, Identifiable {
     let name: String
     let category: String
     let recipe: Recipe?
-    let reviews: [Review]
-    let averageRating: String
-    let totalReviews: Int
+    let reviews: [Review]?
+    let averageRating: Double?
+    let totalReviews: Int?
 }
 
 struct Recipe: Codable {
-    let ingredients: [String]
-    let instructions: String
+    let ingredients: [String]?
+    let instructions: String?
 }
+

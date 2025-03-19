@@ -200,7 +200,6 @@ struct DiscoverView: View {
         return user.followers.contains { $0.id == loggedInUserId }
     }
 
-
     var drinkList: some View {
         VStack(alignment: .leading) {
             Text("Drinks")
@@ -215,6 +214,17 @@ struct DiscoverView: View {
                         Text(drink.category)
                             .font(.subheadline)
                             .foregroundColor(.gray)
+                        
+                        // Provide a default value for totalReviews
+                        HStack {
+                            Text("Average Rating: \(String(format: "%.1f", drink.averageRating ?? 0.0))")
+                                .font(.subheadline)
+                                .foregroundColor(.blue)
+                            
+                            Text("Reviews: \(drink.totalReviews ?? 0)")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                        }
                     }
                     .padding()
                     .background(Color(UIColor.systemBackground))
