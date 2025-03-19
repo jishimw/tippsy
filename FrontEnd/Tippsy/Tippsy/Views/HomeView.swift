@@ -20,128 +20,25 @@ struct HomeView: View {
                 .ignoresSafeArea()
 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 15) {
+                    VStack(alignment: .leading, spacing: 20) {
                         if let user = viewModel.user {
                             // User's profile section
-                            VStack(alignment: .leading, spacing: 15) {
-                                HStack {
-                                    AsyncImage(url: URL(string: user.profilePicture ?? "")) { image in
-                                        image.resizable()
-                                    } placeholder: {
-                                        Color.gray
-                                    }
-                                    .frame(width: 100, height: 100)
-                                    .clipShape(Circle())
-                                    .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                                    .shadow(radius: 10)
+                            userProfileSection(user: user)
 
-                                    VStack(alignment: .leading) {
-                                        Text(user.username)
-                                            .font(.title)
-                                            .fontWeight(.bold)
-                                            .foregroundColor(.white)
-                                        Text("Followers: \(user.followers.count)")
-                                            .foregroundColor(.white)
-                                    }
-                                    Spacer()
-                                }
-                                .padding(.horizontal)
-
-                                // Display the first 3 followers
-                                HStack {
-                                    ForEach(user.followers.prefix(3), id: \.self) { follower in
-                                        NavigationLink(destination: OtherUserProfileView(viewModel: UserViewModel(user: User(id: follower.id, username: follower.username, email: "", profilePicture: follower.profilePicture, preferences: Preferences(drink: [], restaurant: []), followers: [], following: [])))) {
-                                            AsyncImage(url: URL(string: follower.profilePicture ?? "")) { image in
-                                                image.resizable()
-                                            } placeholder: {
-                                                Color.gray
-                                            }
-                                            .frame(width: 50, height: 50)
-                                            .clipShape(Circle())
-                                            .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                                            .shadow(radius: 10)
-                                        }
-                                    }
-                                }
-                                .padding(.horizontal)
-
-                                // User's reviews section
-                                Text("Your Reviews: \(viewModel.reviews.count)")
-                                    .padding(.horizontal)
-                                    .foregroundColor(.white)
-
-                                if viewModel.reviews.isEmpty {
-                                    Text("No reviews yet")
-                                        .italic()
-                                        .foregroundColor(.gray)
-                                        .padding(.horizontal)
-                                } else {
-                                    ForEach(viewModel.reviews, id: \.id) { review in
-                                        ReviewCard(review: review)
-                                    }
-                                }
-                            }
+                            // User's reviews section
+                            userReviewsSection(reviews: viewModel.reviews)
 
                             // Profiles of followed users section
-                            Text("People You Follow")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .padding(.horizontal)
-
-                            if followingUsers.isEmpty {
-                                Text("You are not following anyone yet")
-                                    .italic()
-                                    .foregroundColor(.gray)
-                                    .padding(.horizontal)
-                            } else {
-                                ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(spacing: 15) {
-                                        ForEach(followingUsers, id: \.id) { user in
-                                            NavigationLink(destination: OtherUserProfileView(viewModel: UserViewModel(user:user, isFollowing: isFollowingUser(user)))) {
-                                                VStack {
-                                                    AsyncImage(url: URL(string: user.profilePicture ?? "")) { image in
-                                                        image.resizable()
-                                                    } placeholder: {
-                                                        Color.gray
-                                                    }
-                                                    .frame(width: 80, height: 80)
-                                                    .clipShape(Circle())
-                                                    .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                                                    .shadow(radius: 10)
-                                                    
-                                                    Text(user.username)
-                                                        .font(.subheadline)
-                                                        .foregroundColor(.white)
-                                                }
-                                            }
-                                        }
-                                    }
-                                    .padding(.horizontal)
-                                }
-                            }
+                            followingUsersSection(followingUsers: followingUsers)
 
                             // Reviews from followed users section
-                            Text("Reviews from Followed Users")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .padding(.horizontal)
-
-                            if followingUsersReviews.isEmpty {
-                                Text("No reviews from followed users yet")
-                                    .italic()
-                                    .foregroundColor(.gray)
-                                    .padding(.horizontal)
-                            } else {
-                                ForEach(followingUsersReviews, id: \.id) { review in
-                                    ReviewCard(review: review)
-                                }
-                            }
+                            followingUsersReviewsSection(reviews: followingUsersReviews)
                         } else {
                             ProgressView("Loading...")
                                 .foregroundColor(.white)
                         }
                     }
-                    .padding(.top)
+                    .padding(.top, 20)
                 }
             }
             .navigationTitle("Home")
@@ -154,11 +51,147 @@ struct HomeView: View {
         }
     }
 
+    // MARK: - User Profile Section
+    private func userProfileSection(user: User) -> some View {
+        VStack(alignment: .leading, spacing: 15) {
+            HStack {
+                AsyncImage(url: URL(string: user.profilePicture ?? "")) { image in
+                    image.resizable()
+                } placeholder: {
+                    Color.gray
+                }
+                .frame(width: 100, height: 100)
+                .clipShape(Circle())
+                .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                .shadow(radius: 10)
+
+                VStack(alignment: .leading) {
+                    Text(user.username)
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                    Text("Followers: \(user.followers.count)")
+                        .foregroundColor(.white)
+                }
+                Spacer()
+            }
+            .padding(.horizontal)
+
+            // Display the first 3 followers
+            HStack {
+                ForEach(user.followers.prefix(3), id: \.self) { follower in
+                    NavigationLink(destination: OtherUserProfileView(viewModel: UserViewModel(user: User(id: follower.id, username: follower.username, email: "", profilePicture: follower.profilePicture, preferences: Preferences(drink: [], restaurant: []), followers: [], following: [])))) {
+                        AsyncImage(url: URL(string: follower.profilePicture ?? "")) { image in
+                            image.resizable()
+                        } placeholder: {
+                            Color.gray
+                        }
+                        .frame(width: 50, height: 50)
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                        .shadow(radius: 10)
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+
+    // MARK: - User Reviews Section
+    private func userReviewsSection(reviews: [Review]) -> some View {
+        VStack(alignment: .leading, spacing: 15) {
+            Text("Your Reviews")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+                .padding(.horizontal)
+
+            if reviews.isEmpty {
+                Text("No reviews yet")
+                    .italic()
+                    .foregroundColor(.gray)
+                    .padding(.horizontal)
+            } else {
+                ForEach(reviews, id: \.id) { review in
+                    ReviewCard(review: review)
+                }
+            }
+        }
+    }
+
+    // MARK: - Following Users Section
+    private func followingUsersSection(followingUsers: [User]) -> some View {
+        VStack(alignment: .leading, spacing: 15) {
+            Text("People You Follow")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+                .padding(.horizontal)
+
+            if followingUsers.isEmpty {
+                Text("You are not following anyone yet")
+                    .italic()
+                    .foregroundColor(.gray)
+                    .padding(.horizontal)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 15) {
+                        ForEach(followingUsers, id: \.id) { user in
+                            NavigationLink(destination: OtherUserProfileView(viewModel: UserViewModel(user: user, isFollowing: isFollowingUser(user)))) {
+                                VStack {
+                                    AsyncImage(url: URL(string: user.profilePicture ?? "")) { image in
+                                        image.resizable()
+                                    } placeholder: {
+                                        Color.gray
+                                    }
+                                    .frame(width: 80, height: 80)
+                                    .clipShape(Circle())
+                                    .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                                    .shadow(radius: 10)
+                                    
+                                    Text(user.username)
+                                        .font(.subheadline)
+                                        .foregroundColor(.white)
+                                        .lineLimit(1)
+                                }
+                                .frame(width: 100)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+            }
+        }
+    }
+
+    // MARK: - Following Users Reviews Section
+    private func followingUsersReviewsSection(reviews: [Review]) -> some View {
+        VStack(alignment: .leading, spacing: 15) {
+            Text("Reviews from Followed Users")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+                .padding(.horizontal)
+
+            if reviews.isEmpty {
+                Text("No reviews from followed users yet")
+                    .italic()
+                    .foregroundColor(.gray)
+                    .padding(.horizontal)
+            } else {
+                ForEach(reviews, id: \.id) { review in
+                    ReviewCard(review: review)
+                }
+            }
+        }
+    }
+
+    // MARK: - Helper Functions
     private func isFollowingUser(_ user: User) -> Bool {
         return followingUsers.contains { $0.id == user.id }
     }
     
-    // Helper function to fetch reviews from followed users
+    // Fetch reviews from followed users
     private func fetchFollowingUsersReviews() {
         guard let userId = AuthService.loggedInUserId else { return }
 
@@ -183,7 +216,7 @@ struct HomeView: View {
         }.resume()
     }
 
-    // Helper function to fetch the list of users you follow
+    // Fetch the list of users you follow
     private func fetchFollowingUsers() {
         guard let userId = AuthService.loggedInUserId else { return }
 
@@ -197,10 +230,8 @@ struct HomeView: View {
 
             if let data = data {
                 do {
-                    // Decode into an array of Follower objects
                     let followers = try JSONDecoder().decode([Follower].self, from: data)
                     DispatchQueue.main.async {
-                        // Convert Follower objects to User objects for compatibility
                         self.followingUsers = followers.map { follower in
                             User(
                                 id: follower.id,
@@ -212,9 +243,7 @@ struct HomeView: View {
                                 following: []
                             )
                         }
-                        // Filter out the logged-in user from the list
                         self.followingUsers = self.followingUsers.filter { $0.id != userId }
-                        print("Fetched following users: \(self.followingUsers)") // Debugging
                     }
                 } catch {
                     print("Failed to decode following users: \(error.localizedDescription)")
@@ -224,7 +253,7 @@ struct HomeView: View {
     }
 }
 
-// Reusable Review Card Component
+// MARK: - Reusable Review Card Component
 struct ReviewCard: View {
     let review: Review
 

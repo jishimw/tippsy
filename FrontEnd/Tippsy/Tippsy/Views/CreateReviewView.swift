@@ -22,81 +22,53 @@ struct CreateReviewView: View {
     @State private var alertMessage = ""
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("Create a Review")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .padding(.bottom, 20)
+        ZStack {
+            // Background gradient
+            LinearGradient(
+                gradient: Gradient(colors: [Color.orange.opacity(0.3), Color.red.opacity(0.5)]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-            // Photo Picker
-            if let photo = selectedPhoto {
-                Image(uiImage: photo)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 150)
-                    .cornerRadius(10)
-            } else {
-                Button(action: {
-                    showPhotoPicker = true
-                }) {
-                    Text("Add Photo")
-                        .font(.headline)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    Text("Create a Review")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
                         .foregroundColor(.white)
-                        .padding()
-                        .background(Color.blue)
-                        .cornerRadius(10)
+                        .padding(.bottom, 20)
+
+                    // Photo Picker Section
+                    photoPickerSection
+
+                    // Restaurant Picker Section
+                    pickerSection(title: "Select Restaurant", selection: $selectedRestaurant, options: restaurantOptions)
+                        .onAppear {
+                            fetchRestaurants()
+                        }
+
+                    // Drink Picker Section
+                    pickerSection(title: "Select Drink", selection: $selectedDrink, options: drinkOptions)
+                        .onAppear {
+                            fetchDrinks()
+                        }
+
+                    // Rating Picker Section
+                    stepperSection(title: "Rating", value: $rating, range: 1...5)
+
+                    // Impairment Level Picker Section
+                    stepperSection(title: "Impairment Level", value: $impairmentLevel, range: 1...5)
+
+                    // Comment TextField Section
+                    commentSection
+
+                    // Submit Button
+                    submitButton
                 }
+                .padding()
             }
-
-            // Restaurant Picker
-            Picker("Select Restaurant", selection: $selectedRestaurant) {
-                Text("Home").tag("Home")
-                ForEach(restaurantOptions, id: \.id) { restaurant in
-                    Text(restaurant.name).tag(restaurant.id)
-                }
-            }
-            .pickerStyle(MenuPickerStyle())
-            .onAppear {
-                fetchRestaurants()
-            }
-
-            // Drink Picker
-            Picker("Select Drink", selection: $selectedDrink) {
-                ForEach(drinkOptions, id: \.id) { drink in
-                    Text(drink.name).tag(drink.id)
-                }
-            }
-            .pickerStyle(MenuPickerStyle())
-            .onAppear {
-                fetchDrinks()
-            }
-
-            // Rating Picker
-            Stepper("Rating: \(rating)", value: $rating, in: 1...5)
-
-            // Impairment Level Picker
-            Stepper("Impairment Level: \(impairmentLevel)", value: $impairmentLevel, in: 1...5)
-
-            // Comment TextField
-            TextField("Write your comment...", text: $comment)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .padding(.vertical)
-
-            // Submit Button
-            Button(action: submitReview) {
-                Text("Submit Review")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .cornerRadius(10)
-            }
-            .padding(.vertical)
-
-            Spacer()
         }
-        .padding()
         .sheet(isPresented: $showPhotoPicker) {
             PhotoPicker(selectedImage: $selectedPhoto)
         }
@@ -105,8 +77,110 @@ struct CreateReviewView: View {
         }
     }
 
-    // Fetch Restaurants
-    func fetchRestaurants() {
+    // MARK: - Photo Picker Section
+    private var photoPickerSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Add a Photo")
+                .font(.headline)
+                .foregroundColor(.white)
+
+            if let photo = selectedPhoto {
+                Image(uiImage: photo)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 150)
+                    .cornerRadius(10)
+                    .shadow(radius: 5)
+            } else {
+                Button(action: {
+                    showPhotoPicker = true
+                }) {
+                    HStack {
+                        Image(systemName: "photo")
+                            .foregroundColor(.white)
+                        Text("Choose Photo")
+                            .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue.opacity(0.7))
+                    .cornerRadius(10)
+                    .shadow(radius: 5)
+                }
+            }
+        }
+    }
+
+    // MARK: - Picker Section
+    private func pickerSection(title: String, selection: Binding<String>, options: [(id: String, name: String)]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.headline)
+                .foregroundColor(.white)
+
+            Picker(title, selection: selection) {
+                if title == "Select Restaurant" {
+                    Text("Home").tag("Home")
+                }
+                ForEach(options, id: \.id) { option in
+                    Text(option.name).tag(option.id)
+                }
+            }
+            .pickerStyle(MenuPickerStyle())
+            .padding()
+            .background(Color.white.opacity(0.2))
+            .cornerRadius(10)
+            .shadow(radius: 5)
+        }
+    }
+
+    // MARK: - Stepper Section
+    private func stepperSection(title: String, value: Binding<Int>, range: ClosedRange<Int>) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("\(title): \(value.wrappedValue)")
+                .font(.headline)
+                .foregroundColor(.white)
+
+            Stepper("", value: value, in: range)
+                .padding()
+                .background(Color.white.opacity(0.2))
+                .cornerRadius(10)
+                .shadow(radius: 5)
+        }
+    }
+
+    // MARK: - Comment Section
+    private var commentSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Write your comment...")
+                .font(.headline)
+                .foregroundColor(.white)
+
+            TextField("", text: $comment)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding()
+                .background(Color.white.opacity(0.2))
+                .cornerRadius(10)
+                .shadow(radius: 5)
+        }
+    }
+
+    // MARK: - Submit Button
+    private var submitButton: some View {
+        Button(action: submitReview) {
+            Text("Submit Review")
+                .font(.headline)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.blue.opacity(0.7))
+                .cornerRadius(10)
+                .shadow(radius: 5)
+        }
+    }
+
+    // MARK: - Helper Functions
+    private func fetchRestaurants() {
         guard let url = URL(string: "http://localhost:3000/search/allRestaurants") else { return }
         
         URLSession.shared.dataTask(with: url) { data, response, error in
@@ -132,8 +206,7 @@ struct CreateReviewView: View {
         }.resume()
     }
 
-    // Fetch Drinks
-    func fetchDrinks() {
+    private func fetchDrinks() {
         guard let url = URL(string: "http://localhost:3000/search/allDrinks") else { return }
         
         URLSession.shared.dataTask(with: url) { data, response, error in
@@ -160,9 +233,8 @@ struct CreateReviewView: View {
             }
         }.resume()
     }
-    
-    // Submit Review with Photo
-    func submitReview() {
+
+    private func submitReview() {
         guard let userId = AuthService.loggedInUserId else {
             alertMessage = "User not logged in."
             showAlert = true
@@ -227,7 +299,7 @@ struct CreateReviewView: View {
         }.resume()
     }
 
-    func resetForm() {
+    private func resetForm() {
         selectedRestaurant = ""
         selectedDrink = ""
         rating = 1

@@ -5,7 +5,7 @@
 //  Created by Nathan Bissett on 2024-12-04.
 //
 
-import SwiftUI
+iimport SwiftUI
 
 struct ProfileView: View {
     @ObservedObject var viewModel: UserViewModel
@@ -15,115 +15,170 @@ struct ProfileView: View {
     @State private var showEditProfile = false
 
     var body: some View {
-        VStack {
-            if let user = viewModel.user {
-                AsyncImage(url: URL(string: user.profilePicture ?? "")) { image in
-                    image.resizable()
-                } placeholder: {
-                    Color.gray
-                }
-                .frame(width: 100, height: 100)
-                .clipShape(Circle())
-                .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                .shadow(radius: 10)
-
-                Text(user.username)
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .padding(.top, 10)
-
-                // Replace friends count with followers count
-                Text("Followers: \(user.followers.count)")
-                    .padding(.top, 10)
-
-                // Display the first 3 followers' profile pictures
-                HStack {
-                    ForEach(user.followers.prefix(3), id: \.self) { follower in
-                        AsyncImage(url: URL(string: follower.profilePicture ?? "")) { image in
-                            image.resizable()
-                        } placeholder: {
-                            Color.gray
-                        }
-                        .frame(width: 50, height: 50)
-                        .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                        .shadow(radius: 10)
+        ScrollView { // Wrap the entire content in a ScrollView
+            VStack {
+                if let user = viewModel.user {
+                    // Profile Picture
+                    AsyncImage(url: URL(string: user.profilePicture ?? "")) { image in
+                        image.resizable()
+                    } placeholder: {
+                        Color.gray
                     }
-                }
+                    .frame(width: 120, height: 120)
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(Color.white, lineWidth: 4))
+                    .shadow(radius: 10)
+                    .padding(.top, 20)
 
-                // Display the number of reviews
-                Text("Reviews: \(reviews.count)").padding(.top, 10)
-                if reviews.isEmpty {
-                    Text("No reviews yet")
-                        .italic()
-                        .foregroundColor(.gray)
+                    // Username
+                    Text(user.username)
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+                        .padding(.top, 10)
+
+                    // Followers Count
+                    Text("Followers: \(user.followers.count)")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
                         .padding(.top, 5)
-                } else {
-                    List(reviews.prefix(3), id: \.id) { review in
-                        VStack(alignment: .leading) {
-                            Text("Drink: \(review.drinkName ?? "N/A")")
+
+                    // Followers' Profile Pictures
+                    HStack {
+                        ForEach(user.followers.prefix(3), id: \.self) { follower in
+                            AsyncImage(url: URL(string: follower.profilePicture ?? "")) { image in
+                                image.resizable()
+                            } placeholder: {
+                                Color.gray
+                            }
+                            .frame(width: 40, height: 40)
+                            .clipShape(Circle())
+                            .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                            .shadow(radius: 5)
+                        }
+                    }
+                    .padding(.top, 10)
+
+                    // Reviews Section
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Reviews (\(reviews.count))")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                            .padding(.top, 20)
+
+                        if reviews.isEmpty {
+                            Text("No reviews yet")
+                                .italic()
+                                .foregroundColor(.gray)
+                                .padding(.top, 5)
+                        } else {
+                            ForEach(reviews.prefix(3), id: \.id) { review in
+                                VStack(alignment: .leading, spacing: 5) {
+                                    Text("Drink: \(review.drinkName ?? "N/A")")
+                                        .font(.subheadline)
+                                        .fontWeight(.bold)
+                                    Text("Restaurant: \(review.restaurantName ?? "N/A")")
+                                        .font(.subheadline)
+                                    Text("Rating: \(review.rating)/5")
+                                        .font(.subheadline)
+                                    Text(review.comment)
+                                        .font(.body)
+                                        .foregroundColor(.secondary)
+                                }
+                                .padding()
+                                .background(Color(.systemBackground))
+                                .cornerRadius(10)
+                                .shadow(radius: 2)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+
+                    // Preferences Section
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Preferences")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                            .padding(.top, 20)
+
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("Drink Preferences")
                                 .font(.subheadline)
                                 .fontWeight(.bold)
-                            Text("Restaurant: \(review.restaurantName ?? "N/A")")
+                            ForEach(user.preferences.drink, id: \.self) { drink in
+                                Text(drink)
+                                    .font(.body)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .cornerRadius(10)
+                        .shadow(radius: 2)
+
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("Restaurant Preferences")
                                 .font(.subheadline)
-                            Text("Rating: \(review.rating)/5")
-                                .font(.subheadline)
-                            Text(review.comment)
-                                .font(.body)
-                                .foregroundColor(.secondary)
+                                .fontWeight(.bold)
+                            ForEach(user.preferences.restaurant, id: \.self) { restaurant in
+                                Text(restaurant)
+                                    .font(.body)
+                                    .foregroundColor(.secondary)
+                            }
                         }
-                        .padding(.vertical, 5)
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .cornerRadius(10)
+                        .shadow(radius: 2)
                     }
-                    .frame(height: 200) // Limit the list height
-                }
+                    .padding(.horizontal)
 
-                // Preferences Area
-                ZStack {
-                    Color.gray.opacity(0.2).cornerRadius(10)
-                    VStack(alignment: .leading) {
-                        Text("Drink Preferences").font(.headline)
-                        ForEach(user.preferences.drink, id: \.self) { drink in
-                            Text(drink)
-                        }
-                        Text("Restaurant Preferences").font(.headline)
-                        ForEach(user.preferences.restaurant, id: \.self) { restaurant in
-                            Text(restaurant)
-                        }
+                    // Edit Profile Button
+                    Button(action: {
+                        showEditProfile = true
+                    }) {
+                        Text("Edit Profile")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.blue)
+                            .cornerRadius(10)
                     }
-                    .padding()
-                }
-                .padding()
+                    .padding(.horizontal)
+                    .padding(.top, 20)
 
-                Button("Edit Profile") {
-                    showEditProfile = true
-                }.font(.headline)
-                .foregroundColor(.white)
-                .padding()
-                .background(Color.blue)
-                .cornerRadius(8)
-                .sheet(isPresented: $showEditProfile) {
-                    EditProfileView(viewModel: viewModel)
+                    // Logout Button
+                    Button(action: {
+                        AuthService.loggedInUserId = nil
+                        isLoggedIn = false
+                        viewModel.user = nil
+                        viewModel.reviews = []
+                        viewModel.followingUsers = []
+                    }) {
+                        Text("Logout")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.red)
+                            .cornerRadius(10)
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 10)
+                    .padding(.bottom, 20)
+                } else {
+                    ProgressView("Loading...")
+                        .padding()
                 }
-
-                Button("Logout") {
-                    AuthService.loggedInUserId = nil
-                    isLoggedIn = false
-                    viewModel.user = nil // Reset the user data
-                    viewModel.reviews = [] // Clear the reviews
-                    viewModel.followingUsers = [] // Clear the following users
-                }
-                .font(.headline)
-                .foregroundColor(.white)
-                .padding()
-                .background(Color.red)
-                .cornerRadius(8)
-            } else {
-                ProgressView("Loading...")
             }
         }
         .onAppear {
             viewModel.fetchUserProfile()
-            reviews = viewModel.reviews // Assign reviews to the local state
+            reviews = viewModel.reviews
+        }
+        .sheet(isPresented: $showEditProfile) {
+            EditProfileView(viewModel: viewModel)
         }
     }
 }
