@@ -172,7 +172,7 @@ struct DiscoverView: View {
     
     
     var drinkList: some View {
-        List(topDrinks,  id: \._id) { drink in
+        List(topDrinks,  id: \.id) { drink in
             VStack(alignment: .leading) {
                 Text(drink.name).font(.headline)
                 Text(drink.category).font(.subheadline).foregroundColor(.gray)
